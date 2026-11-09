@@ -1,38 +1,34 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿
+using System;
 
 namespace Garupa.Domain.Entities
 {
     public class ContatoEmergencia
     {
         public int Id { get; private set; }
-        public string Nome { get; private set; }
-        public string Telefone { get; private set; }
+
+        // Chave estrangeira para a tabela Usuario
+        public int UsuarioId { get; private set; }
+
+        public string Nome { get; private set; } = string.Empty;
+
+        public string Telefone { get; private set; } = string.Empty;
+
+        // Construtor para o Entity Framework
+        private ContatoEmergencia() { }
 
         public ContatoEmergencia(string nome, string telefone)
         {
-            Nome = nome;
-            Telefone = telefone;
-        }
-    }
+            if (string.IsNullOrWhiteSpace(nome))
+                throw new ArgumentException(
+                    "Nome do contato é obrigatório");
 
-    public class FichaMedica
-    {
-        public int Id { get; private set; }
-        public string TipoSanguineo { get; private set; }
-        public string Alergias { get; private set; }
-        public string Condicoes { get; private set; }
-        public string Medicamentos { get; private set; }
+            if (string.IsNullOrWhiteSpace(telefone))
+                throw new ArgumentException(
+                    "Telefone do contato é obrigatório");
 
-        public FichaMedica(string tipoSanguineo, string alergias, string condicoes, string medicamentos)
-        {
-            TipoSanguineo = tipoSanguineo;
-            Alergias = alergias;
-            Condicoes = condicoes;
-            Medicamentos = medicamentos;
+            Nome = nome.Trim();
+            Telefone = telefone.Trim();
         }
     }
 }
