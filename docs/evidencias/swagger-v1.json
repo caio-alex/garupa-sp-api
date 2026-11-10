@@ -1,0 +1,3145 @@
+{
+  "openapi": "3.0.4",
+  "info": {
+    "title": "Garupa SP API",
+    "description": "API de cadastro, risco viário e socorro. Exemplos com dados pessoais fictícios. Datas em UTC.",
+    "version": "v1"
+  },
+  "paths": {
+    "/api/v1/distritos": {
+      "get": {
+        "tags": [
+          "Conteudo"
+        ],
+        "summary": "Listar os 96 distritos com identificadores IBGE",
+        "responses": {
+          "200": {
+            "description": "Consulta concluída.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DistritoConsulta"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno com mensagem genérica.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "about:blank",
+                  "title": "Erro interno com mensagem genérica.",
+                  "status": 500
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/mensagens": {
+      "get": {
+        "tags": [
+          "Conteudo"
+        ],
+        "summary": "Consultar catálogo por contexto e tipo de uso",
+        "parameters": [
+          {
+            "name": "contexto",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "example": "chuva"
+          },
+          {
+            "name": "tipoDeUso",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "example": "entregador_app"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Consulta concluída.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MensagemResposta"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Entrada inválida.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "about:blank",
+                  "title": "Entrada inválida.",
+                  "status": 400
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno com mensagem genérica.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "about:blank",
+                  "title": "Erro interno com mensagem genérica.",
+                  "status": 500
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/risco": {
+      "get": {
+        "tags": [
+          "Conteudo"
+        ],
+        "summary": "Consultar pontos críticos por raio e contexto",
+        "description": "Lista de até 500 pontos por score, limitada a 190.000 bytes para reservar espaço dentro dos 200 KB da resposta.",
+        "parameters": [
+          {
+            "name": "lat",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "number",
+              "format": "double"
+            },
+            "example": -23.55
+          },
+          {
+            "name": "lon",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "number",
+              "format": "double"
+            },
+            "example": -46.63
+          },
+          {
+            "name": "raioMetros",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "number",
+              "format": "double"
+            },
+            "example": 1000
+          },
+          {
+            "name": "faixaHoraria",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "example": 2
+          },
+          {
+            "name": "tipoDia",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "util"
+          },
+          {
+            "name": "chuva",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "boolean"
+            },
+            "example": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Consulta concluída.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PontoCritico"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Entrada inválida.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "about:blank",
+                  "title": "Entrada inválida.",
+                  "status": 400
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno com mensagem genérica.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "about:blank",
+                  "title": "Erro interno com mensagem genérica.",
+                  "status": 500
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/risco/celulas/{id}": {
+      "get": {
+        "tags": [
+          "Conteudo"
+        ],
+        "summary": "Consultar todas as faixas de uma célula",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Consulta concluída.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CelulaRisco"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recurso inexistente ou token expirado.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "about:blank",
+                  "title": "Recurso inexistente ou token expirado.",
+                  "status": 404
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno com mensagem genérica.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "about:blank",
+                  "title": "Erro interno com mensagem genérica.",
+                  "status": 500
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/plano-do-turno": {
+      "get": {
+        "tags": [
+          "Conteudo"
+        ],
+        "summary": "Montar plano com faixa explícita ou habitual",
+        "description": "Lista de até 500 pontos por score, limitada a 190.000 bytes para reservar espaço dentro dos 200 KB da resposta.",
+        "parameters": [
+          {
+            "name": "usuarioId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "example": 1
+          },
+          {
+            "name": "faixaHoraria",
+            "in": "query",
+            "description": "Opcional. A faixa informada prevalece. Sem ela, usa o próximo horário habitual do tipo de dia; sem hábito, usa a hora de São Paulo.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "example": 2
+          },
+          {
+            "name": "tipoDia",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "util"
+          },
+          {
+            "name": "chuva",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "boolean"
+            },
+            "example": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Consulta concluída.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlanoTurno"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Entrada inválida.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "about:blank",
+                  "title": "Entrada inválida.",
+                  "status": 400
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recurso inexistente ou token expirado.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "about:blank",
+                  "title": "Recurso inexistente ou token expirado.",
+                  "status": 404
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno com mensagem genérica.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "about:blank",
+                  "title": "Erro interno com mensagem genérica.",
+                  "status": 500
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/usuarios/{id}/vestivel": {
+      "post": {
+        "tags": [
+          "IntegracaoVestivel"
+        ],
+        "summary": "Parear dispositivo opcional",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "example": 1
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PareamentoRequest"
+              },
+              "example": {
+                "dispositivoId": "garupa-demo"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PareamentoRequest"
+              },
+              "example": {
+                "dispositivoId": "garupa-demo"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/PareamentoRequest"
+              },
+              "example": {
+                "dispositivoId": "garupa-demo"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Operação concluída sem corpo."
+          },
+          "400": {
+            "description": "Entrada inválida.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "about:blank",
+                  "title": "Entrada inválida.",
+                  "status": 400
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recurso inexistente ou token expirado.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "about:blank",
+                  "title": "Recurso inexistente ou token expirado.",
+                  "status": 404
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflito de estado, consentimento ou concorrência.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "about:blank",
+                  "title": "Conflito de estado, consentimento ou concorrência.",
+                  "status": 409
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno com mensagem genérica.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "about:blank",
+                  "title": "Erro interno com mensagem genérica.",
+                  "status": 500
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "IntegracaoVestivel"
+        ],
+        "summary": "Desparear e descartar pendências",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "example": 1
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Operação concluída sem corpo."
+          },
+          "404": {
+            "description": "Recurso inexistente ou token expirado.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "about:blank",
+                  "title": "Recurso inexistente ou token expirado.",
+                  "status": 404
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno com mensagem genérica.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "about:blank",
+                  "title": "Erro interno com mensagem genérica.",
+                  "status": 500
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/usuarios/{id}/alertas-vestivel": {
+      "post": {
+        "tags": [
+          "IntegracaoVestivel"
+        ],
+        "summary": "Enfileirar alerta com validade de 30 segundos",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "example": 1
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AlertaVestivelRequest"
+              },
+              "example": {
+                "tipo": "ponto_critico",
+                "ocorridoEm": "2026-11-10T10:00:00Z"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AlertaVestivelRequest"
+              },
+              "example": {
+                "tipo": "ponto_critico",
+                "ocorridoEm": "2026-11-10T10:00:00Z"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/AlertaVestivelRequest"
+              },
+              "example": {
+                "tipo": "ponto_critico",
+                "ocorridoEm": "2026-11-10T10:00:00Z"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Evento aceito e persistido."
+          },
+          "400": {
+            "description": "Entrada inválida.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "about:blank",
+                  "title": "Entrada inválida.",
+                  "status": 400
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recurso inexistente ou token expirado.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "about:blank",
+                  "title": "Recurso inexistente ou token expirado.",
+                  "status": 404
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflito de estado, consentimento ou concorrência.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "about:blank",
+                  "title": "Conflito de estado, consentimento ou concorrência.",
+                  "status": 409
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno com mensagem genérica.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "about:blank",
+                  "title": "Erro interno com mensagem genérica.",
+                  "status": 500
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/eventos-vestivel": {
+      "post": {
+        "tags": [
+          "IntegracaoVestivel"
+        ],
+        "summary": "Receber evento de dispositivo pareado",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EventoVestivelRequest"
+              },
+              "example": {
+                "dispositivoId": "garupa-demo",
+                "tipo": "impacto",
+                "ocorridoEm": "2026-11-10T10:00:00Z"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EventoVestivelRequest"
+              },
+              "example": {
+                "dispositivoId": "garupa-demo",
+                "tipo": "impacto",
+                "ocorridoEm": "2026-11-10T10:00:00Z"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/EventoVestivelRequest"
+              },
+              "example": {
+                "dispositivoId": "garupa-demo",
+                "tipo": "impacto",
+                "ocorridoEm": "2026-11-10T10:00:00Z"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Evento aceito e persistido."
+          },
+          "400": {
+            "description": "Entrada inválida.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "about:blank",
+                  "title": "Entrada inválida.",
+                  "status": 400
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recurso inexistente ou token expirado.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "about:blank",
+                  "title": "Recurso inexistente ou token expirado.",
+                  "status": 404
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflito de estado, consentimento ou concorrência.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "about:blank",
+                  "title": "Conflito de estado, consentimento ou concorrência.",
+                  "status": 409
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno com mensagem genérica.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "about:blank",
+                  "title": "Erro interno com mensagem genérica.",
+                  "status": 500
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/eventos-vestivel/pendentes": {
+      "get": {
+        "tags": [
+          "IntegracaoVestivel"
+        ],
+        "summary": "Consumir até 100 eventos uma única vez",
+        "parameters": [
+          {
+            "name": "usuarioId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "maximum": 2147483647,
+              "minimum": 1,
+              "type": "integer",
+              "format": "int32"
+            },
+            "example": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Consulta concluída.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EventoPendente"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Entrada inválida.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "about:blank",
+                  "title": "Entrada inválida.",
+                  "status": 400
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recurso inexistente ou token expirado.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "about:blank",
+                  "title": "Recurso inexistente ou token expirado.",
+                  "status": 404
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno com mensagem genérica.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "about:blank",
+                  "title": "Erro interno com mensagem genérica.",
+                  "status": 500
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/vestivel/{dispositivoId}/alertas/pendentes": {
+      "get": {
+        "tags": [
+          "IntegracaoVestivel"
+        ],
+        "summary": "Consumir alertas válidos uma única vez",
+        "parameters": [
+          {
+            "name": "dispositivoId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "garupa-demo"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Consulta concluída.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AlertaPendente"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recurso inexistente ou token expirado.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "about:blank",
+                  "title": "Recurso inexistente ou token expirado.",
+                  "status": 404
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno com mensagem genérica.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "about:blank",
+                  "title": "Erro interno com mensagem genérica.",
+                  "status": 500
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/usuarios/{id}/consentimentos": {
+      "put": {
+        "tags": [
+          "Privacidade"
+        ],
+        "summary": "Conceder ou revogar os cinco consentimentos",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "example": 1
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConsentimentosRequest"
+              },
+              "example": {
+                "localizacaoEmUso": true,
+                "localizacaoEmSegundoPlano": true,
+                "fichaMedica": true,
+                "historicoDeLocais": false,
+                "perfilDeUso": true
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConsentimentosRequest"
+              },
+              "example": {
+                "localizacaoEmUso": true,
+                "localizacaoEmSegundoPlano": true,
+                "fichaMedica": true,
+                "historicoDeLocais": false,
+                "perfilDeUso": true
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConsentimentosRequest"
+              },
+              "example": {
+                "localizacaoEmUso": true,
+                "localizacaoEmSegundoPlano": true,
+                "fichaMedica": true,
+                "historicoDeLocais": false,
+                "perfilDeUso": true
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Operação concluída sem corpo."
+          },
+          "400": {
+            "description": "Entrada inválida.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "about:blank",
+                  "title": "Entrada inválida.",
+                  "status": 400
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recurso inexistente ou token expirado.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "about:blank",
+                  "title": "Recurso inexistente ou token expirado.",
+                  "status": 404
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflito de estado, consentimento ou concorrência.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "about:blank",
+                  "title": "Conflito de estado, consentimento ou concorrência.",
+                  "status": 409
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno com mensagem genérica.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "about:blank",
+                  "title": "Erro interno com mensagem genérica.",
+                  "status": 500
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/usuarios/{id}/ficha-medica": {
+      "put": {
+        "tags": [
+          "Privacidade"
+        ],
+        "summary": "Salvar ficha opcional com consentimento",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "example": 1
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FichaMedicaRequest"
+              },
+              "example": {
+                "tipoSanguineo": "O+",
+                "alergias": "Exemplo fictício",
+                "condicoes": "",
+                "medicamentos": ""
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FichaMedicaRequest"
+              },
+              "example": {
+                "tipoSanguineo": "O+",
+                "alergias": "Exemplo fictício",
+                "condicoes": "",
+                "medicamentos": ""
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/FichaMedicaRequest"
+              },
+              "example": {
+                "tipoSanguineo": "O+",
+                "alergias": "Exemplo fictício",
+                "condicoes": "",
+                "medicamentos": ""
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Operação concluída sem corpo."
+          },
+          "400": {
+            "description": "Entrada inválida.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "about:blank",
+                  "title": "Entrada inválida.",
+                  "status": 400
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recurso inexistente ou token expirado.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "about:blank",
+                  "title": "Recurso inexistente ou token expirado.",
+                  "status": 404
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflito de estado, consentimento ou concorrência.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "about:blank",
+                  "title": "Conflito de estado, consentimento ou concorrência.",
+                  "status": 409
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno com mensagem genérica.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "about:blank",
+                  "title": "Erro interno com mensagem genérica.",
+                  "status": 500
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/usuarios/{id}/perfil": {
+      "put": {
+        "tags": [
+          "Privacidade"
+        ],
+        "summary": "Salvar usos, horários habituais e até cinco distritos",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "example": 1
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PerfilRequest"
+              },
+              "example": {
+                "tiposDeUso": [
+                  "entregador_app"
+                ],
+                "horariosHabituais": [
+                  {
+                    "faixaHoraria": 2,
+                    "tipoDia": "util"
+                  }
+                ],
+                "distritosFrequentes": [
+                  355030801
+                ]
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PerfilRequest"
+              },
+              "example": {
+                "tiposDeUso": [
+                  "entregador_app"
+                ],
+                "horariosHabituais": [
+                  {
+                    "faixaHoraria": 2,
+                    "tipoDia": "util"
+                  }
+                ],
+                "distritosFrequentes": [
+                  355030801
+                ]
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/PerfilRequest"
+              },
+              "example": {
+                "tiposDeUso": [
+                  "entregador_app"
+                ],
+                "horariosHabituais": [
+                  {
+                    "faixaHoraria": 2,
+                    "tipoDia": "util"
+                  }
+                ],
+                "distritosFrequentes": [
+                  355030801
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Operação concluída sem corpo."
+          },
+          "400": {
+            "description": "Entrada inválida.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "about:blank",
+                  "title": "Entrada inválida.",
+                  "status": 400
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recurso inexistente ou token expirado.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "about:blank",
+                  "title": "Recurso inexistente ou token expirado.",
+                  "status": 404
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflito de estado, consentimento ou concorrência.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "about:blank",
+                  "title": "Conflito de estado, consentimento ou concorrência.",
+                  "status": 409
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno com mensagem genérica.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "about:blank",
+                  "title": "Erro interno com mensagem genérica.",
+                  "status": 500
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/usuarios/{id}": {
+      "delete": {
+        "tags": [
+          "Privacidade"
+        ],
+        "summary": "Excluir usuário e seus dados dependentes",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "example": 1
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Operação concluída sem corpo."
+          },
+          "404": {
+            "description": "Recurso inexistente ou token expirado.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "about:blank",
+                  "title": "Recurso inexistente ou token expirado.",
+                  "status": 404
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno com mensagem genérica.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "about:blank",
+                  "title": "Erro interno com mensagem genérica.",
+                  "status": 500
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Usuarios"
+        ],
+        "summary": "Editar nome e telefone",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "example": 1
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CriarContatoRequest"
+              },
+              "example": {
+                "nome": "Contato fictício",
+                "telefone": "1134567890"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CriarContatoRequest"
+              },
+              "example": {
+                "nome": "Contato fictício",
+                "telefone": "1134567890"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/CriarContatoRequest"
+              },
+              "example": {
+                "nome": "Contato fictício",
+                "telefone": "1134567890"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Operação concluída sem corpo."
+          },
+          "400": {
+            "description": "Entrada inválida.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "about:blank",
+                  "title": "Entrada inválida.",
+                  "status": 400
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recurso inexistente ou token expirado.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "about:blank",
+                  "title": "Recurso inexistente ou token expirado.",
+                  "status": 404
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflito de estado, consentimento ou concorrência.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "about:blank",
+                  "title": "Conflito de estado, consentimento ou concorrência.",
+                  "status": 409
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno com mensagem genérica.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "about:blank",
+                  "title": "Erro interno com mensagem genérica.",
+                  "status": 500
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Usuarios"
+        ],
+        "summary": "Consultar cadastro e contatos",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "example": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Consulta concluída.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UsuarioConsulta"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recurso inexistente ou token expirado.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "about:blank",
+                  "title": "Recurso inexistente ou token expirado.",
+                  "status": 404
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno com mensagem genérica.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "about:blank",
+                  "title": "Erro interno com mensagem genérica.",
+                  "status": 500
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/relatos": {
+      "post": {
+        "tags": [
+          "Relato"
+        ],
+        "summary": "Registrar relato idempotente dentro de São Paulo",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RelatoRequest"
+              },
+              "example": {
+                "eventoId": "f61061c7-a2e1-4f94-9425-d14c2f4c3455",
+                "usuarioId": 1,
+                "tipo": "buraco",
+                "lat": -23.55,
+                "lon": -46.63,
+                "descricao": "Exemplo fictício"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RelatoRequest"
+              },
+              "example": {
+                "eventoId": "f61061c7-a2e1-4f94-9425-d14c2f4c3455",
+                "usuarioId": 1,
+                "tipo": "buraco",
+                "lat": -23.55,
+                "lon": -46.63,
+                "descricao": "Exemplo fictício"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/RelatoRequest"
+              },
+              "example": {
+                "eventoId": "f61061c7-a2e1-4f94-9425-d14c2f4c3455",
+                "usuarioId": 1,
+                "tipo": "buraco",
+                "lat": -23.55,
+                "lon": -46.63,
+                "descricao": "Exemplo fictício"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Recurso criado ou recuperado por idempotência.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RelatoCriado"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Entrada inválida.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "about:blank",
+                  "title": "Entrada inválida.",
+                  "status": 400
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recurso inexistente ou token expirado.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "about:blank",
+                  "title": "Recurso inexistente ou token expirado.",
+                  "status": 404
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflito de estado, consentimento ou concorrência.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "about:blank",
+                  "title": "Conflito de estado, consentimento ou concorrência.",
+                  "status": 409
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno com mensagem genérica.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "about:blank",
+                  "title": "Erro interno com mensagem genérica.",
+                  "status": 500
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/saude": {
+      "get": {
+        "tags": [
+          "Saude"
+        ],
+        "summary": "Verificar versão e conexão com o banco",
+        "responses": {
+          "200": {
+            "description": "Consulta concluída.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SaudeConsulta"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Banco indisponível.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SaudeConsulta"
+                },
+                "example": {
+                  "versao": "1.0",
+                  "banco": "indisponivel"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno com mensagem genérica.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "about:blank",
+                  "title": "Erro interno com mensagem genérica.",
+                  "status": 500
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/saude": {
+      "get": {
+        "tags": [
+          "Saude"
+        ],
+        "summary": "Verificar saúde pelo endereço do monitor",
+        "responses": {
+          "200": {
+            "description": "Consulta concluída.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SaudeConsulta"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Banco indisponível.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SaudeConsulta"
+                },
+                "example": {
+                  "versao": "1.0",
+                  "banco": "indisponivel"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno com mensagem genérica.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "about:blank",
+                  "title": "Erro interno com mensagem genérica.",
+                  "status": 500
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sos": {
+      "post": {
+        "tags": [
+          "Sos"
+        ],
+        "summary": "Criar SOS ou recuperar o mesmo evento reenviado",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SosRequest"
+              },
+              "example": {
+                "eventoId": "a7cabdd5-8976-4454-8aa6-1fd22aa504c5",
+                "usuarioId": 1,
+                "tipo": "queda",
+                "origem": "celular",
+                "ocorridoEm": "2026-11-10T10:00:00Z",
+                "lat": -23.55,
+                "lon": -46.63
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SosRequest"
+              },
+              "example": {
+                "eventoId": "a7cabdd5-8976-4454-8aa6-1fd22aa504c5",
+                "usuarioId": 1,
+                "tipo": "queda",
+                "origem": "celular",
+                "ocorridoEm": "2026-11-10T10:00:00Z",
+                "lat": -23.55,
+                "lon": -46.63
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/SosRequest"
+              },
+              "example": {
+                "eventoId": "a7cabdd5-8976-4454-8aa6-1fd22aa504c5",
+                "usuarioId": 1,
+                "tipo": "queda",
+                "origem": "celular",
+                "ocorridoEm": "2026-11-10T10:00:00Z",
+                "lat": -23.55,
+                "lon": -46.63
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Recurso criado ou recuperado por idempotência.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SosCriado"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Entrada inválida.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "about:blank",
+                  "title": "Entrada inválida.",
+                  "status": 400
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recurso inexistente ou token expirado.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "about:blank",
+                  "title": "Recurso inexistente ou token expirado.",
+                  "status": 404
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflito de estado, consentimento ou concorrência.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "about:blank",
+                  "title": "Conflito de estado, consentimento ou concorrência.",
+                  "status": 409
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno com mensagem genérica.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "about:blank",
+                  "title": "Erro interno com mensagem genérica.",
+                  "status": 500
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sos/{id}/cancelar": {
+      "patch": {
+        "tags": [
+          "Sos"
+        ],
+        "summary": "Cancelar SOS de forma idempotente",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "example": 1
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Operação concluída sem corpo."
+          },
+          "404": {
+            "description": "Recurso inexistente ou token expirado.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "about:blank",
+                  "title": "Recurso inexistente ou token expirado.",
+                  "status": 404
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflito de estado, consentimento ou concorrência.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "about:blank",
+                  "title": "Conflito de estado, consentimento ou concorrência.",
+                  "status": 409
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno com mensagem genérica.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "about:blank",
+                  "title": "Erro interno com mensagem genérica.",
+                  "status": 500
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sos/{id}/encerrar": {
+      "patch": {
+        "tags": [
+          "Sos"
+        ],
+        "summary": "Encerrar SOS de forma idempotente",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "example": 1
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Operação concluída sem corpo."
+          },
+          "404": {
+            "description": "Recurso inexistente ou token expirado.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "about:blank",
+                  "title": "Recurso inexistente ou token expirado.",
+                  "status": 404
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflito de estado, consentimento ou concorrência.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "about:blank",
+                  "title": "Conflito de estado, consentimento ou concorrência.",
+                  "status": 409
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno com mensagem genérica.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "about:blank",
+                  "title": "Erro interno com mensagem genérica.",
+                  "status": 500
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/acompanhar/{token}": {
+      "get": {
+        "tags": [
+          "Sos"
+        ],
+        "summary": "Acompanhar posição e estado pelo token válido",
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Consulta concluída.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AcompanhamentoConsulta"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recurso inexistente ou token expirado.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "about:blank",
+                  "title": "Recurso inexistente ou token expirado.",
+                  "status": 404
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno com mensagem genérica.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "about:blank",
+                  "title": "Erro interno com mensagem genérica.",
+                  "status": 500
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/usuarios/{id}/contatos/{contatoId}": {
+      "put": {
+        "tags": [
+          "Usuarios"
+        ],
+        "summary": "Editar contato de emergência",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "example": 1
+          },
+          {
+            "name": "contatoId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "example": 1
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CriarContatoRequest"
+              },
+              "example": {
+                "nome": "Contato fictício",
+                "telefone": "1134567890"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CriarContatoRequest"
+              },
+              "example": {
+                "nome": "Contato fictício",
+                "telefone": "1134567890"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/CriarContatoRequest"
+              },
+              "example": {
+                "nome": "Contato fictício",
+                "telefone": "1134567890"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Operação concluída sem corpo."
+          },
+          "400": {
+            "description": "Entrada inválida.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "about:blank",
+                  "title": "Entrada inválida.",
+                  "status": 400
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recurso inexistente ou token expirado.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "about:blank",
+                  "title": "Recurso inexistente ou token expirado.",
+                  "status": 404
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflito de estado, consentimento ou concorrência.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "about:blank",
+                  "title": "Conflito de estado, consentimento ou concorrência.",
+                  "status": 409
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno com mensagem genérica.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "about:blank",
+                  "title": "Erro interno com mensagem genérica.",
+                  "status": 500
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Usuarios"
+        ],
+        "summary": "Remover contato preservando pelo menos um",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "example": 1
+          },
+          {
+            "name": "contatoId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "example": 1
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Operação concluída sem corpo."
+          },
+          "404": {
+            "description": "Recurso inexistente ou token expirado.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "about:blank",
+                  "title": "Recurso inexistente ou token expirado.",
+                  "status": 404
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflito de estado, consentimento ou concorrência.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "about:blank",
+                  "title": "Conflito de estado, consentimento ou concorrência.",
+                  "status": 409
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno com mensagem genérica.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "about:blank",
+                  "title": "Erro interno com mensagem genérica.",
+                  "status": 500
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/usuarios": {
+      "post": {
+        "tags": [
+          "Usuarios"
+        ],
+        "summary": "Cadastrar usuário e contato em uma transação",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CriarUsuarioRequest"
+              },
+              "example": {
+                "nome": "Pessoa fictícia",
+                "telefone": "11987654321",
+                "contato": {
+                  "nome": "Contato fictício",
+                  "telefone": "1134567890"
+                }
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CriarUsuarioRequest"
+              },
+              "example": {
+                "nome": "Pessoa fictícia",
+                "telefone": "11987654321",
+                "contato": {
+                  "nome": "Contato fictício",
+                  "telefone": "1134567890"
+                }
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/CriarUsuarioRequest"
+              },
+              "example": {
+                "nome": "Pessoa fictícia",
+                "telefone": "11987654321",
+                "contato": {
+                  "nome": "Contato fictício",
+                  "telefone": "1134567890"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Recurso criado ou recuperado por idempotência.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UsuarioCriado"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Entrada inválida.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "about:blank",
+                  "title": "Entrada inválida.",
+                  "status": 400
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno com mensagem genérica.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "about:blank",
+                  "title": "Erro interno com mensagem genérica.",
+                  "status": 500
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/usuarios/{id}/contatos": {
+      "post": {
+        "tags": [
+          "Usuarios"
+        ],
+        "summary": "Adicionar contato de emergência",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "example": 1
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CriarContatoRequest"
+              },
+              "example": {
+                "nome": "Contato fictício",
+                "telefone": "1134567890"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CriarContatoRequest"
+              },
+              "example": {
+                "nome": "Contato fictício",
+                "telefone": "1134567890"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/CriarContatoRequest"
+              },
+              "example": {
+                "nome": "Contato fictício",
+                "telefone": "1134567890"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Recurso criado ou recuperado por idempotência.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContatoCriado"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Entrada inválida.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "about:blank",
+                  "title": "Entrada inválida.",
+                  "status": 400
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recurso inexistente ou token expirado.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "about:blank",
+                  "title": "Recurso inexistente ou token expirado.",
+                  "status": 404
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflito de estado, consentimento ou concorrência.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "about:blank",
+                  "title": "Conflito de estado, consentimento ou concorrência.",
+                  "status": 409
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno com mensagem genérica.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "about:blank",
+                  "title": "Erro interno com mensagem genérica.",
+                  "status": 500
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AcompanhamentoConsulta": {
+        "type": "object",
+        "properties": {
+          "posicao": {
+            "$ref": "#/components/schemas/PosicaoConsulta"
+          },
+          "horario": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "estado": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "AlertaPendente": {
+        "type": "object",
+        "properties": {
+          "alertaId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "tipo": {
+            "type": "string",
+            "nullable": true
+          },
+          "ocorridoEm": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false
+      },
+      "AlertaVestivelRequest": {
+        "type": "object",
+        "properties": {
+          "tipo": {
+            "type": "string",
+            "nullable": true
+          },
+          "ocorridoEm": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "CelulaRisco": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32",
+            "readOnly": true
+          },
+          "celulaId": {
+            "type": "string",
+            "nullable": true
+          },
+          "centroLat": {
+            "type": "number",
+            "format": "double",
+            "readOnly": true
+          },
+          "centroLon": {
+            "type": "number",
+            "format": "double",
+            "readOnly": true
+          },
+          "faixaHoraria": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "tipoDia": {
+            "type": "string",
+            "nullable": true
+          },
+          "chuva": {
+            "type": "boolean"
+          },
+          "score": {
+            "type": "number",
+            "format": "double"
+          },
+          "percentil": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "viaReferencia": {
+            "type": "string",
+            "nullable": true
+          },
+          "distritoId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "versaoModelo": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ConsentimentosRequest": {
+        "type": "object",
+        "properties": {
+          "localizacaoEmUso": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "localizacaoEmSegundoPlano": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "fichaMedica": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "historicoDeLocais": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "perfilDeUso": {
+            "type": "boolean",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ContatoConsulta": {
+        "type": "object",
+        "properties": {
+          "contatoId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "nome": {
+            "type": "string",
+            "nullable": true
+          },
+          "telefone": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ContatoCriado": {
+        "type": "object",
+        "properties": {
+          "contatoId": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "CriarContatoRequest": {
+        "type": "object",
+        "properties": {
+          "nome": {
+            "type": "string",
+            "nullable": true
+          },
+          "telefone": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "CriarUsuarioRequest": {
+        "type": "object",
+        "properties": {
+          "nome": {
+            "type": "string",
+            "nullable": true
+          },
+          "telefone": {
+            "type": "string",
+            "nullable": true
+          },
+          "contato": {
+            "$ref": "#/components/schemas/CriarContatoRequest"
+          }
+        },
+        "additionalProperties": false
+      },
+      "DistritoConsulta": {
+        "type": "object",
+        "properties": {
+          "distritoId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "nome": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "EventoPendente": {
+        "type": "object",
+        "properties": {
+          "eventoId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "tipo": {
+            "type": "string",
+            "nullable": true
+          },
+          "ocorridoEm": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false
+      },
+      "EventoVestivelRequest": {
+        "type": "object",
+        "properties": {
+          "dispositivoId": {
+            "type": "string",
+            "nullable": true
+          },
+          "tipo": {
+            "type": "string",
+            "nullable": true
+          },
+          "ocorridoEm": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "FichaMedicaRequest": {
+        "type": "object",
+        "properties": {
+          "tipoSanguineo": {
+            "maxLength": 3,
+            "type": "string",
+            "nullable": true
+          },
+          "alergias": {
+            "maxLength": 2000,
+            "type": "string",
+            "nullable": true
+          },
+          "condicoes": {
+            "maxLength": 2000,
+            "type": "string",
+            "nullable": true
+          },
+          "medicamentos": {
+            "maxLength": 2000,
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "HorarioHabitual": {
+        "type": "object",
+        "properties": {
+          "faixaHoraria": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "tipoDia": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "MensagemResposta": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "texto": {
+            "type": "string",
+            "nullable": true
+          },
+          "fonte": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "PareamentoRequest": {
+        "type": "object",
+        "properties": {
+          "dispositivoId": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "PerfilRequest": {
+        "type": "object",
+        "properties": {
+          "tiposDeUso": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "horariosHabituais": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HorarioHabitual"
+            },
+            "nullable": true
+          },
+          "distritosFrequentes": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "PlanoTurno": {
+        "type": "object",
+        "properties": {
+          "pontosCriticos": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PontoCritico"
+            },
+            "nullable": true
+          },
+          "mensagens": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MensagemResposta"
+            },
+            "nullable": true
+          },
+          "faixaHoraria": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "origemFaixa": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "PontoCritico": {
+        "type": "object",
+        "properties": {
+          "celulaId": {
+            "type": "string",
+            "nullable": true
+          },
+          "centroLat": {
+            "type": "number",
+            "format": "double"
+          },
+          "centroLon": {
+            "type": "number",
+            "format": "double"
+          },
+          "score": {
+            "type": "number",
+            "format": "double"
+          },
+          "percentil": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "viaReferencia": {
+            "type": "string",
+            "nullable": true
+          },
+          "distritoId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "versaoModelo": {
+            "type": "string",
+            "nullable": true
+          },
+          "motivo": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "PosicaoConsulta": {
+        "type": "object",
+        "properties": {
+          "lat": {
+            "type": "number",
+            "format": "double"
+          },
+          "lon": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ProblemDetails": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "nullable": true
+          },
+          "title": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "nullable": true
+          },
+          "instance": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": {}
+      },
+      "RelatoCriado": {
+        "type": "object",
+        "properties": {
+          "relatoId": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "RelatoRequest": {
+        "type": "object",
+        "properties": {
+          "eventoId": {
+            "type": "string",
+            "nullable": true
+          },
+          "usuarioId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "tipo": {
+            "type": "string",
+            "nullable": true
+          },
+          "lat": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "lon": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "descricao": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "SaudeConsulta": {
+        "type": "object",
+        "properties": {
+          "versao": {
+            "type": "string",
+            "nullable": true
+          },
+          "banco": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "SosCriado": {
+        "type": "object",
+        "properties": {
+          "sosId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "tokenAcompanhamento": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "SosRequest": {
+        "type": "object",
+        "properties": {
+          "eventoId": {
+            "type": "string",
+            "nullable": true
+          },
+          "usuarioId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "tipo": {
+            "type": "string",
+            "nullable": true
+          },
+          "origem": {
+            "type": "string",
+            "nullable": true
+          },
+          "ocorridoEm": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "lat": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "lon": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "UsuarioConsulta": {
+        "type": "object",
+        "properties": {
+          "usuarioId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "nome": {
+            "type": "string",
+            "nullable": true
+          },
+          "telefone": {
+            "type": "string",
+            "nullable": true
+          },
+          "contatos": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ContatoConsulta"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "UsuarioCriado": {
+        "type": "object",
+        "properties": {
+          "usuarioId": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "Conteudo"
+    },
+    {
+      "name": "IntegracaoVestivel"
+    },
+    {
+      "name": "Privacidade"
+    },
+    {
+      "name": "Usuarios"
+    },
+    {
+      "name": "Relato"
+    },
+    {
+      "name": "Saude"
+    },
+    {
+      "name": "Sos"
+    }
+  ]
+}

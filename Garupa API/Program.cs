@@ -13,7 +13,16 @@ builder.Logging.AddJsonConsole();
 // Controllers e documentação
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(options =>
+{
+    options.SwaggerDoc("v1", new Microsoft.OpenApi.OpenApiInfo
+    {
+        Title = "Garupa SP API",
+        Version = "v1",
+        Description = "API de cadastro, risco viário e socorro. Exemplos com dados pessoais fictícios. Datas em UTC."
+    });
+    options.OperationFilter<Garupa.Api.Documentacao.ContratoSwagger>();
+});
 builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<Garupa.Api.Errors.ApiExceptionHandler>();
 // Evita registrar excecoes e URLs que possam conter dados pessoais ou tokens.

@@ -23,7 +23,10 @@ internal static class CatalogoInicial
             new(3, "Use luvas, roupa de proteção e calçado fechado ao pilotar.", "geral", "trabalho_moto", dnit),
             new(4, "Na entrega com chuva, reduza a velocidade e preserve sua segurança.", "chuva", "entregador_app", dnit),
             new(5, "Mantenha atenção às condições da via e espaço para reagir.", "ponto_critico", null, dnit),
-            new(6, "No passeio, use capacete afivelado e equipamento de proteção.", "domingo", "lazer", dnit)
+            new(6, "No passeio, use capacete afivelado e equipamento de proteção.", "domingo", "lazer", dnit),
+            new(7, "À noite, roupas claras e resistentes ajudam a manter você visível no trânsito.", "noite", null,
+                "https://vitoria.es.gov.br/setran/dicas-para-motociclistas"),
+            new(8, "Antes de sair no domingo, confira as condições dos freios, luzes e pneus.", "domingo", null, dnit)
         ];
     }
 }

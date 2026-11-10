@@ -17,7 +17,7 @@ namespace Garupa.Infrastructure.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "9.0.22")
+                .HasAnnotation("ProductVersion", "10.0.15")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -839,6 +839,22 @@ namespace Garupa.Infrastructure.Migrations
                             Fonte = "https://www.gov.br/dnit/pt-br/assuntos/noticias/motociclista-no-transito-a-atencao-precisa-ser-redobrada",
                             Texto = "No passeio, use capacete afivelado e equipamento de proteção.",
                             TipoDeUso = "lazer"
+                        },
+                        new
+                        {
+                            Id = 7,
+                            Ativa = true,
+                            Contexto = "noite",
+                            Fonte = "https://vitoria.es.gov.br/setran/dicas-para-motociclistas",
+                            Texto = "À noite, roupas claras e resistentes ajudam a manter você visível no trânsito."
+                        },
+                        new
+                        {
+                            Id = 8,
+                            Ativa = true,
+                            Contexto = "domingo",
+                            Fonte = "https://www.gov.br/dnit/pt-br/assuntos/noticias/motociclista-no-transito-a-atencao-precisa-ser-redobrada",
+                            Texto = "Antes de sair no domingo, confira as condições dos freios, luzes e pneus."
                         });
                 });
 

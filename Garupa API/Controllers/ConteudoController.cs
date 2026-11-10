@@ -31,10 +31,10 @@ public class ConteudoController(IConteudoService conteudo, IPerfilService perfis
 
     [HttpGet("plano-do-turno")]
     public async Task<IActionResult> Plano([FromQuery, Required] int? usuarioId,
-        [FromQuery, Required] int? faixaHoraria, [FromQuery, Required] string tipoDia,
+        [FromQuery] int? faixaHoraria, [FromQuery, Required] string tipoDia,
         [FromQuery, Required] bool? chuva, CancellationToken ct)
     {
-        var plano = await conteudo.PlanoAsync(usuarioId!.Value, faixaHoraria!.Value, tipoDia, chuva!.Value, ct);
+        var plano = await conteudo.PlanoAsync(usuarioId!.Value, faixaHoraria, tipoDia, chuva!.Value, ct);
         return plano is null ? Problem(statusCode: 404, title: "Usuário não encontrado.") : Ok(plano);
     }
 }

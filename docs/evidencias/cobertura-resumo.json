@@ -1,0 +1,9 @@
+{
+  "runtime": ".NET 10.0.15",
+  "testesFuncionaisAprovados": 58,
+  "testesDesempenhoAprovados": 1,
+  "coberturaDeLinhasPercentual": {
+    "Garupa.Application": 99.17,
+    "Garupa.Domain": 92.99
+  }
+}

@@ -1,13 +1,15 @@
 # Garupa SP API
 
-API em .NET 9 com camadas Domain, Application, Infrastructure e API. PostgreSQL é o banco da aplicação. Os testes usam SQLite em memória e WebApplicationFactory.
+API em .NET 10 LTS com camadas Domain, Application, Infrastructure e API. PostgreSQL é o banco da aplicação. Os testes usam SQLite em memória e PostgreSQL com WebApplicationFactory.
 
 ## Executar
 
-Instale o SDK .NET 9, PostgreSQL e a ferramenta `dotnet-ef` da versão 9. Configure a conexão por variável de ambiente no PowerShell usando um banco local de desenvolvimento.
+Instale o SDK .NET 10.0.404 ou uma atualização do mesmo feature band e o PostgreSQL. O `global.json` fixa o SDK e inclui `.local/dotnet` na busca, com fallback para a instalação do sistema. Isso permite ao Visual Studio 2026 localizar o SDK local mesmo quando o instalador do IDE trouxe outra versão. O manifesto `dotnet-tools.json` fixa o `dotnet-ef` 10.0.15. O script `Use-DotNet.ps1` seleciona também o host e o runtime locais para os comandos do terminal. Configure a conexão por variável de ambiente no PowerShell usando um banco local de desenvolvimento.
 
 ```powershell
+.\scripts\Use-DotNet.ps1
 $env:ConnectionStrings__GarupaDb = 'Host=localhost;Database=garupa;Username=SEU_USUARIO;Password=SUA_SENHA'
+dotnet tool restore
 dotnet restore 'Garupa API.sln'
 dotnet run --project 'Garupa API' -- preparar-banco
 dotnet run --project 'Garupa API'
@@ -35,7 +37,7 @@ Para parar essa instância após o desenvolvimento, execute na raiz do projeto.
 & 'C:\Program Files\PostgreSQL\17\bin\pg_ctl.exe' -D "$PWD\.local\postgres" -w -m fast stop
 ```
 
-O Swagger está em `/swagger` no ambiente Development. A URL local aparece no terminal. O arquivo `Garupa API/Garupa API.http` contém exemplos do fluxo.
+O Swagger está em `/swagger` no ambiente Development. Ele documenta os códigos HTTP, os schemas de resposta, os parâmetros e exemplos fictícios dos corpos de requisição. A URL local aparece no terminal. O arquivo `Garupa API/Garupa API.http` contém exemplos do fluxo.
 
 ## Cadastro e SOS
 
@@ -76,11 +78,12 @@ Erros usam ProblemDetails com mensagens genéricas. Os logs JSON registram méto
 dotnet test 'Garupa API.sln'
 ```
 
-Os testes cobrem os endpoints principais, persistência, validação, criptografia, migração de dados antigos, reenvio, conflitos de estado, privacidade dos logs, retenção e expiração usando relógio controlado. A execução padrão usa SQLite e dispensa o PostgreSQL. Os cinco testes exclusivos de concorrência do PostgreSQL são ignorados nessa execução.
+Os testes cobrem os endpoints principais, persistência, validação, criptografia, migração de dados antigos, reenvio, conflitos de estado, privacidade dos logs, retenção, horários habituais, Swagger e tamanho das respostas. A execução padrão usa SQLite e dispensa o PostgreSQL. Os testes exclusivos de concorrência e desempenho do PostgreSQL são ignorados nessa execução.
 
 Para executar a suíte com PostgreSQL, inicie o banco local e execute os comandos abaixo. O script usa a conexão dos User Secrets ou de `ConnectionStrings__GarupaDb`. A compilação fica em `.local/postgres-tests`, permitindo testar enquanto a API está aberta no Visual Studio.
 
 ```powershell
+.\scripts\Use-DotNet.ps1
 dotnet restore 'Garupa API.sln' --artifacts-path '.local/postgres-tests'
 .\scripts\Test-Postgres.ps1
 # Inclui relatório Cobertura em .local/coverage-postgres
@@ -89,7 +92,7 @@ dotnet restore 'Garupa API.sln' --artifacts-path '.local/postgres-tests'
 
 Cada instância de teste cria um schema `garupa_tests_` com sufixo aleatório, aplica as migrations nesse schema e o remove ao terminar. A suíte verifica reenvios HTTP simultâneos, recuperação de conflito pelo índice único, consumo único do vestível e proteção contra transições ou exclusões concorrentes. O schema da aplicação permanece separado dos dados de teste.
 
-Na validação local de 09/11/2026, os 50 testes passaram com PostgreSQL. O relatório Cobertura mediu 92,72% de cobertura de linhas no domínio e 99,53% na camada Application. A verificação da API em execução confirmou 28 operações no Swagger e o fluxo HTTP com cadastro, consentimentos, ficha, perfil, conteúdo, SOS, vestível e relato. O usuário fictício dessa verificação foi excluído ao final.
+Na validação local de 10/11/2026 em .NET 10, foram aprovados 58 testes funcionais e um teste de desempenho com PostgreSQL. O relatório Cobertura mediu 92,99% de cobertura de linhas no domínio e 99,17% na camada Application. A verificação HTTP confirmou 28 operações no Swagger, os exemplos e as regras de horários. Consulte `docs/VALIDACAO_API.md` para os resultados e arquivos de evidência.
 
 ## Demais recursos da API
 
@@ -121,7 +124,13 @@ Ficha e perfil exigem seus respectivos consentimentos, retornando 409 enquanto n
 
 O perfil aceita `entregador_app`, `trabalho_moto`, `ida_volta` e `lazer`. As faixas horárias vão de 0 a 5, com quatro horas cada. Os tipos de dia são `util`, `sabado` e `domingo`. As consultas de risco e plano usam percentil mínimo 95 e ordenam por score. O score da célula é preservado entre perfis. Cada resposta limita a lista a 500 pontos. O raio aceito vai de 1 a 50.000 metros.
 
-O plano funciona sem perfil, retornando mensagens gerais e uma lista vazia de pontos personalizados. Com perfil, seleciona as células dos distritos declarados e mensagens do contexto da consulta e dos tipos de uso. Os horários habituais são armazenados para o cadastro. O contexto atual do plano é determinado pelos parâmetros enviados na consulta.
+O plano funciona sem perfil, retornando mensagens gerais e uma lista vazia de pontos personalizados. Com perfil, seleciona as células dos distritos declarados e mensagens do contexto da consulta e dos tipos de uso.
+
+No plano, `faixaHoraria` é opcional. Quando informada, ela prevalece. Quando omitida, o servidor escolhe a faixa habitual mais próxima a partir da faixa atual, em ordem circular de 0 a 5, entre os horários do tipo de dia consultado. Sem hábito aplicável, usa a faixa atual no fuso `America/Sao_Paulo`. A resposta informa `faixaHoraria` e `origemFaixa` (`consulta`, `perfil` ou `horario_atual`). A chuva e o tipo de dia continuam explícitos. A personalização preserva o score do modelo.
+
+Risco e plano retornam até 500 pontos, respeitando um orçamento de 190.000 bytes para a lista. O restante dos 200 KB fica reservado às mensagens e aos metadados. A seleção preserva os primeiros pontos na ordem de score.
+
+O catálogo inclui mensagens gerais para chuva, noite, domingo e ponto crítico, além de mensagens específicas por tipo de uso. A origem de cada texto acompanha a resposta. As fontes e a revisão técnica estão em `Garupa.Infrastructure/Resources/README.md`.
 
 O vestível recebe `turno_ativo`, `ponto_critico`, `mensagem`, `contagem_queda`, `sos_enviado`, `cancelado` e `turno_encerrado`. A expiração usa o horário do evento em UTC. Cada consulta consome até 100 registros, em ordem de ID. Desparear ou trocar o dispositivo elimina as pendências anteriores. Dispositivo sem pareamento recebe 404.
 
@@ -138,3 +147,9 @@ O importador valida todo o arquivo antes de substituir o snapshot em uma transa�
 As colunas obrigatórias são `celula_id`, `centro_lat`, `centro_lon`, `faixa_horaria`, `tipo_dia`, `chuva` (0 ou 1), `score`, `percentil`, `via_referencia`, `distrito_id`, `distrito_nome` e `versao_modelo`. Para IDs GeoSampa, a conversão usa o nome oficial do distrito. A lista retornada pela API sempre usa IDs IBGE.
 
 As consultas retornam listas vazias enquanto o CSV do modelo não for importado. Os dados geográficos e as fontes do catálogo estão documentados em `Garupa.Infrastructure/Resources/README.md`.
+
+## Desempenho e evidências
+
+O teste `RiscoEPlanoAtendemMetasComCargaSinteticaEmKestrel` usa Kestrel HTTP em uma porta local dinâmica e PostgreSQL em schema exclusivo. A carga tem 10.000 células fictícias. Para cada rota, ele faz cinco aquecimentos e cem requisições, com quatro chamadas simultâneas, e mede p50, p95, máximo, bytes e quantidade de pontos.
+
+As metas verificadas são p95 até 500 ms e resposta até 200.000 bytes. O relatório é gravado em `.local/evidencias/desempenho-postgres.json`. A execução é local e usa dados sintéticos, portanto a validação com o CSV real deve ser feita quando ele estiver disponível. Consulte também `docs/VALIDACAO_API.md` para as evidências desta versão.

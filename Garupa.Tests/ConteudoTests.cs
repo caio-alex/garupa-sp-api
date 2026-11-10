@@ -99,4 +99,65 @@ public class ConteudoTests
 
     private static CelulaRisco Celula(string id, double lat, double lon, double score, int percentil, int distrito)
         => new(id, lat, lon, 2, "util", true, score, percentil, "Via fictícia", distrito, "teste");
+
+    [Fact]
+    public async Task PlanoUsaHorarioHabitualQuandoFaixaForOmitidaEConsultaTemPrioridade()
+    {
+        using var factory = new ApiFactory();
+        using var client = factory.CriarCliente();
+        var id = await Cenarios.CadastrarAsync(client);
+        await Cenarios.ConsentirAsync(client, id);
+        await client.PutAsJsonAsync($"/api/v1/usuarios/{id}/perfil", new
+        {
+            tiposDeUso = new[] { "lazer" },
+            horariosHabituais = new[] { new { faixaHoraria = 4, tipoDia = "util" }, new { faixaHoraria = 1, tipoDia = "sabado" } },
+            distritosFrequentes = Array.Empty<int>()
+        });
+        var habitual = await client.GetFromJsonAsync<JsonElement>($"/api/v1/plano-do-turno?usuarioId={id}&tipoDia=util&chuva=false");
+        Assert.Equal(4, habitual.GetProperty("faixaHoraria").GetInt32());
+        Assert.Equal("perfil", habitual.GetProperty("origemFaixa").GetString());
+        var explicito = await client.GetFromJsonAsync<JsonElement>($"/api/v1/plano-do-turno?usuarioId={id}&faixaHoraria=2&tipoDia=util&chuva=false");
+        Assert.Equal(2, explicito.GetProperty("faixaHoraria").GetInt32());
+        Assert.Equal("consulta", explicito.GetProperty("origemFaixa").GetString());
+        var semHabito = await client.GetFromJsonAsync<JsonElement>($"/api/v1/plano-do-turno?usuarioId={id}&tipoDia=domingo&chuva=false");
+        Assert.Equal(2, semHabito.GetProperty("faixaHoraria").GetInt32());
+        Assert.Equal("horario_atual", semHabito.GetProperty("origemFaixa").GetString());
+    }
+
+    [Fact]
+    public async Task RespostasRespeitamOrcamentoComTextosUnicodeLongos()
+    {
+        using var factory = new ApiFactory();
+        using var client = factory.CriarCliente();
+        var usuario = await Cenarios.CadastrarAsync(client);
+        await Cenarios.ConsentirAsync(client, usuario);
+        await Cenarios.PerfilAsync(client, usuario, "lazer", [355030801]);
+        using (var scope = factory.Services.CreateScope())
+        {
+            var context = scope.ServiceProvider.GetRequiredService<GarupaDbContext>();
+            for (var i = 0; i < 500; i++)
+                context.CelulasRisco.Add(new CelulaRisco(new string('Á', 90) + i, -23.55, -46.63,
+                    2, "util", false, 0.99, 99, new string('Á', 200), 355030801, new string('Á', 100)));
+            await context.SaveChangesAsync();
+        }
+        var risco = await client.GetByteArrayAsync("/api/v1/risco?lat=-23.55&lon=-46.63&raioMetros=500&faixaHoraria=2&tipoDia=util&chuva=false");
+        var plano = await client.GetByteArrayAsync($"/api/v1/plano-do-turno?usuarioId={usuario}&faixaHoraria=2&tipoDia=util&chuva=false");
+        Assert.True(risco.Length <= 200000);
+        Assert.True(plano.Length <= 200000);
+        Assert.InRange(JsonSerializer.Deserialize<JsonElement[]>(risco)!.Length, 1, 499);
+    }
+
+    [Theory]
+    [InlineData("geral")]
+    [InlineData("chuva")]
+    [InlineData("noite")]
+    [InlineData("domingo")]
+    [InlineData("ponto_critico")]
+    public async Task CatalogoOfereceMensagemGeralParaCadaContexto(string contexto)
+    {
+        using var factory = new ApiFactory();
+        using var client = factory.CriarCliente();
+        var mensagens = await client.GetFromJsonAsync<JsonElement[]>($"/api/v1/mensagens?contexto={contexto}&tipoDeUso=ida_volta");
+        Assert.NotEmpty(mensagens!);
+    }
 }

@@ -90,6 +90,9 @@ GET {{Garupa_API_HostAddress}}/api/v1/risco?lat=-23.55&lon=-46.63&raioMetros=100
 ### Plano personalizado
 GET {{Garupa_API_HostAddress}}/api/v1/plano-do-turno?usuarioId={{usuarioId}}&faixaHoraria=2&tipoDia=util&chuva=true
 
+### Plano com seleção do próximo horário habitual do perfil
+GET {{Garupa_API_HostAddress}}/api/v1/plano-do-turno?usuarioId={{usuarioId}}&tipoDia=util&chuva=true
+
 ### Parear dispositivo simulado
 POST {{Garupa_API_HostAddress}}/api/v1/usuarios/{{usuarioId}}/vestivel
 Content-Type: application/json

@@ -12,6 +12,8 @@ using Garupa.Application.Interfaces;
 using Garupa.Infrastructure.Security;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
+using Microsoft.AspNetCore.Diagnostics;
+using Microsoft.AspNetCore.Http;
 
 namespace Garupa.Tests;
 
@@ -24,6 +26,7 @@ public class ApiFactory : WebApplicationFactory<Program>
     public bool UsaPostgres => postgresConnection is not null;
     public TestClock Clock { get; } = new();
     public ConcurrentQueue<string> Logs { get; } = new();
+    public ConcurrentQueue<Exception> Erros { get; } = new();
 
     public ApiFactory()
     {
@@ -52,9 +55,14 @@ public class ApiFactory : WebApplicationFactory<Program>
     {
         builder.UseEnvironment("Testing");
         builder.ConfigureAppConfiguration((_, config) => config.AddInMemoryCollection(
-            new Dictionary<string, string?> { ["ConnectionStrings:GarupaDb"] = "Host=unused;Database=tests" }));
+            new Dictionary<string, string?>
+            {
+                ["ConnectionStrings:GarupaDb"] = "Host=unused;Database=tests",
+                ["Logging:EventLog:LogLevel:Default"] = "None"
+            }));
         builder.ConfigureServices(services =>
         {
+            services.Insert(0, ServiceDescriptor.Singleton<IExceptionHandler>(new CapturaExcecoes(Erros)));
             services.AddSingleton<ILoggerProvider>(new LogCapturado(Logs));
             services.RemoveAll<DbContextOptions<GarupaDbContext>>();
             services.RemoveAll<IDbContextOptionsConfiguration<GarupaDbContext>>();
@@ -73,9 +81,11 @@ public class ApiFactory : WebApplicationFactory<Program>
         });
     }
 
-    public HttpClient CriarCliente()
+    public HttpClient CriarCliente(bool usarKestrel = false)
     {
-        var client = CreateClient(new WebApplicationFactoryClientOptions { BaseAddress = new Uri("https://localhost") });
+        if (usarKestrel) UseKestrel(0);
+        var client = usarKestrel ? CreateClient()
+            : CreateClient(new WebApplicationFactoryClientOptions { BaseAddress = new Uri("https://localhost") });
         using var scope = Services.CreateScope();
         var database = scope.ServiceProvider.GetRequiredService<GarupaDbContext>().Database;
         if (UsaPostgres) database.Migrate();
@@ -99,6 +109,15 @@ public class ApiFactory : WebApplicationFactory<Program>
             command.CommandText = $"DROP SCHEMA IF EXISTS \"{schema}\" CASCADE";
             command.ExecuteNonQuery();
         }
+    }
+}
+
+internal sealed class CapturaExcecoes(ConcurrentQueue<Exception> erros) : IExceptionHandler
+{
+    public ValueTask<bool> TryHandleAsync(HttpContext httpContext, Exception exception, CancellationToken cancellationToken)
+    {
+        erros.Enqueue(exception);
+        return ValueTask.FromResult(false);
     }
 }
 
