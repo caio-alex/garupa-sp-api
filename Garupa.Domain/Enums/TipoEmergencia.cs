@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -17,6 +17,6 @@ namespace Garupa.Domain.Enums
     {
         Ativo,
         Cancelado,
-        Finalizado
+        Encerrado
     }
 }

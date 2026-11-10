@@ -1,4 +1,4 @@
-﻿
+
 using Garupa.Api.DTOs.Usuarios;
 using Garupa.Application.Interfaces;
 using Microsoft.AspNetCore.Mvc;
@@ -15,6 +15,21 @@ public class UsuariosController : ControllerBase
     {
         _usuarioService = usuarioService;
     }
+
+    [HttpPut("{id:int}")]
+    public async Task<IActionResult> Atualizar(int id, CriarContatoRequest request, CancellationToken ct)
+        => await _usuarioService.AtualizarAsync(id, request.Nome, request.Telefone, ct)
+            ? NoContent() : Problem(statusCode: 404, title: "Usuário não encontrado.");
+
+    [HttpPut("{id:int}/contatos/{contatoId:int}")]
+    public async Task<IActionResult> AtualizarContato(int id, int contatoId, CriarContatoRequest request, CancellationToken ct)
+        => await _usuarioService.AtualizarContatoAsync(id, contatoId, request.Nome, request.Telefone, ct)
+            ? NoContent() : Problem(statusCode: 404, title: "Contato não encontrado.");
+
+    [HttpDelete("{id:int}/contatos/{contatoId:int}")]
+    public async Task<IActionResult> RemoverContato(int id, int contatoId, CancellationToken ct)
+        => await _usuarioService.RemoverContatoAsync(id, contatoId, ct)
+            ? NoContent() : Problem(statusCode: 404, title: "Contato não encontrado.");
 
     [HttpPost]
     public async Task<IActionResult> Criar(
@@ -35,6 +50,8 @@ public class UsuariosController : ControllerBase
         var usuario = await _usuarioService.CriarAsync(
             request.Nome,
             request.Telefone,
+            request.Contato.Nome,
+            request.Contato.Telefone,
             cancellationToken);
 
         return Created(
@@ -104,34 +121,4 @@ public class UsuariosController : ControllerBase
         });
     }
 
-    // Endpoints existentes do vestível.
-    // Ainda são mocks; a persistência será implementada depois.
-
-    [HttpPost("{id:int}/vestivel")]
-    public IActionResult ParearVestivel(
-        int id,
-        [FromBody] PareamentoRequest request)
-    {
-        return NoContent();
-    }
-
-    [HttpDelete("{id:int}/vestivel")]
-    public IActionResult DesfazerPareamento(int id)
-    {
-        return NoContent();
-    }
-
-    [HttpPost("{id:int}/alertas-vestivel")]
-    public IActionResult CriarAlertaVestivel(
-        int id,
-        [FromBody] AlertaVestivelRequest request)
-    {
-        return Accepted();
-    }
 }
-
-public record PareamentoRequest(string dispositivoId);
-
-public record AlertaVestivelRequest(
-    string tipo,
-    string ocorridoEm);

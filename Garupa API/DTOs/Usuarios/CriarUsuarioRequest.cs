@@ -1,4 +1,4 @@
-﻿
+
 using System.ComponentModel.DataAnnotations;
 
 namespace Garupa.Api.DTOs.Usuarios;
@@ -10,5 +10,8 @@ public record CriarUsuarioRequest(
 
     [Required]
     [MaxLength(20)]
-    string Telefone
+    string Telefone,
+
+    [Required]
+    CriarContatoRequest Contato
 );
