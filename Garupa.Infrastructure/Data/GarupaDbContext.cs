@@ -1,16 +1,30 @@
-﻿
+
 using Garupa.Domain.Entities;
+using Garupa.Application.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
 namespace Garupa.Infrastructure.Data;
 
 public class GarupaDbContext : DbContext
 {
+    private readonly ICriptografiaDados criptografia;
     public GarupaDbContext(
-        DbContextOptions<GarupaDbContext> options)
+        DbContextOptions<GarupaDbContext> options, ICriptografiaDados criptografia)
         : base(options)
     {
+        this.criptografia = criptografia;
     }
+
+    public DbSet<Sos> Sos => Set<Sos>();
+    public DbSet<Consentimento> Consentimentos => Set<Consentimento>();
+    public DbSet<PerfilUso> Perfis => Set<PerfilUso>();
+    public DbSet<Distrito> Distritos => Set<Distrito>();
+    public DbSet<Mensagem> Mensagens => Set<Mensagem>();
+    public DbSet<CelulaRisco> CelulasRisco => Set<CelulaRisco>();
+    public DbSet<Vestivel> Vestiveis => Set<Vestivel>();
+    public DbSet<EventoVestivel> EventosVestivel => Set<EventoVestivel>();
+    public DbSet<AlertaVestivel> AlertasVestivel => Set<AlertaVestivel>();
+    public DbSet<Relato> Relatos => Set<Relato>();
 
     public DbSet<Usuario> Usuarios => Set<Usuario>();
 
@@ -21,16 +35,29 @@ public class GarupaDbContext : DbContext
         ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+        RecursosModel.Configurar(modelBuilder, criptografia);
 
-        // A ficha médica será mapeada em uma etapa futura,
-        // com criptografia em repouso.
-        // modelBuilder.Ignore<FichaMedica>();
+        modelBuilder.Entity<Sos>(entity =>
+        {
+            entity.ToTable("sos");
+            entity.HasKey(s => s.Id);
+            entity.Property(s => s.EventoId).HasMaxLength(36).IsRequired();
+            entity.Property(s => s.TokenAcompanhamento).IsRequired();
+            entity.Property(s => s.Origem).HasMaxLength(10).IsRequired();
+            entity.HasIndex(s => s.EventoId).IsUnique();
+            entity.HasIndex(s => s.TokenHash).IsUnique();
+            entity.Property(s => s.Estado).IsConcurrencyToken();
+            entity.HasOne<Usuario>().WithMany().HasForeignKey(s => s.UsuarioId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
 
         modelBuilder.Entity<Usuario>(entity =>
         {
             entity.ToTable("usuarios");
 
             entity.HasKey(u => u.Id);
+            entity.Property(u => u.Versao).IsConcurrencyToken();
 
             entity.Property(u => u.Nome)
                 .IsRequired()

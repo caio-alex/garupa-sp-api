@@ -1,4 +1,4 @@
-﻿
+
 using System;
 
 namespace Garupa.Domain.Entities
@@ -28,7 +28,15 @@ namespace Garupa.Domain.Entities
                     "Telefone do contato é obrigatório");
 
             Nome = nome.Trim();
-            Telefone = telefone.Trim();
+            Telefone = TelefoneBrasileiro.Validar(telefone);
+        }
+
+        public void Atualizar(string nome, string telefone)
+        {
+            if (string.IsNullOrWhiteSpace(nome) || nome.Length > 120)
+                throw new ArgumentException("Nome inválido.");
+            Nome = nome.Trim();
+            Telefone = TelefoneBrasileiro.Validar(telefone);
         }
     }
 }

@@ -1,6 +1,134 @@
 @Garupa_API_HostAddress = http://localhost:5221
+@usuarioId = 1
+@sosId = 1
+@token = SUBSTITUA_PELO_TOKEN_RETORNADO
+@dispositivoId = garupa-demo
+# Atualize com o horário UTC atual antes dos eventos e alertas. Alertas expiram em 30 segundos.
+@ocorridoEm = 2026-11-09T12:00:00Z
 
-GET {{Garupa_API_HostAddress}}/weatherforecast/
-Accept: application/json
+### Verificar conexão com o banco
+GET {{Garupa_API_HostAddress}}/api/v1/saude
 
 ###
+POST {{Garupa_API_HostAddress}}/api/v1/usuarios
+Content-Type: application/json
+
+{
+  "nome": "Pessoa fictícia",
+  "telefone": "11987654321",
+  "contato": { "nome": "Contato fictício", "telefone": "1134567890" }
+}
+
+### Consultar cadastro. Atualize usuarioId com a resposta anterior.
+GET {{Garupa_API_HostAddress}}/api/v1/usuarios/{{usuarioId}}
+
+### Criar SOS. Repetir este corpo mantém o mesmo SOS.
+POST {{Garupa_API_HostAddress}}/api/v1/sos
+Content-Type: application/json
+
+{
+  "eventoId": "a7cabdd5-8976-4454-8aa6-1fd22aa504c5",
+  "usuarioId": {{usuarioId}},
+  "tipo": "queda",
+  "origem": "celular",
+  "ocorridoEm": "2026-11-09T12:00:00Z",
+  "lat": -23.55,
+  "lon": -46.63
+}
+
+### Acompanhar. Atualize token e sosId com a resposta do SOS.
+GET {{Garupa_API_HostAddress}}/api/v1/acompanhar/{{token}}
+
+### Cancelar. Repetir retorna 204.
+PATCH {{Garupa_API_HostAddress}}/api/v1/sos/{{sosId}}/cancelar
+
+### Encerrar outro SOS ativo. Um SOS já cancelado retorna 409.
+PATCH {{Garupa_API_HostAddress}}/api/v1/sos/{{sosId}}/encerrar
+
+### Conceder os consentimentos antes de gravar ficha e perfil
+PUT {{Garupa_API_HostAddress}}/api/v1/usuarios/{{usuarioId}}/consentimentos
+Content-Type: application/json
+
+{
+  "localizacaoEmUso": true,
+  "localizacaoEmSegundoPlano": true,
+  "fichaMedica": true,
+  "historicoDeLocais": false,
+  "perfilDeUso": true
+}
+
+### Ficha opcional. Todos os valores são fictícios.
+PUT {{Garupa_API_HostAddress}}/api/v1/usuarios/{{usuarioId}}/ficha-medica
+Content-Type: application/json
+
+{
+  "tipoSanguineo": "O+",
+  "alergias": "Exemplo fictício",
+  "condicoes": "",
+  "medicamentos": ""
+}
+
+### Distritos oficiais e seus IDs
+GET {{Garupa_API_HostAddress}}/api/v1/distritos
+
+### Perfil de uso
+PUT {{Garupa_API_HostAddress}}/api/v1/usuarios/{{usuarioId}}/perfil
+Content-Type: application/json
+
+{
+  "tiposDeUso": ["entregador_app"],
+  "horariosHabituais": [{ "faixaHoraria": 2, "tipoDia": "util" }],
+  "distritosFrequentes": [355030801]
+}
+
+### Catálogo contextual
+GET {{Garupa_API_HostAddress}}/api/v1/mensagens?contexto=chuva&tipoDeUso=entregador_app
+
+### Risco. Os pontos ficam disponíveis após a importação do CSV.
+GET {{Garupa_API_HostAddress}}/api/v1/risco?lat=-23.55&lon=-46.63&raioMetros=1000&faixaHoraria=2&tipoDia=util&chuva=true
+
+### Plano personalizado
+GET {{Garupa_API_HostAddress}}/api/v1/plano-do-turno?usuarioId={{usuarioId}}&faixaHoraria=2&tipoDia=util&chuva=true
+
+### Parear dispositivo simulado
+POST {{Garupa_API_HostAddress}}/api/v1/usuarios/{{usuarioId}}/vestivel
+Content-Type: application/json
+
+{ "dispositivoId": "{{dispositivoId}}" }
+
+### Evento sem localização ou dados pessoais
+POST {{Garupa_API_HostAddress}}/api/v1/eventos-vestivel
+Content-Type: application/json
+
+{ "dispositivoId": "{{dispositivoId}}", "tipo": "impacto", "ocorridoEm": "{{ocorridoEm}}" }
+
+### Consulta consome os eventos. Repetir devolve uma lista vazia.
+GET {{Garupa_API_HostAddress}}/api/v1/eventos-vestivel/pendentes?usuarioId={{usuarioId}}
+
+### Alerta pendente para o dispositivo
+POST {{Garupa_API_HostAddress}}/api/v1/usuarios/{{usuarioId}}/alertas-vestivel
+Content-Type: application/json
+
+{ "tipo": "ponto_critico", "ocorridoEm": "{{ocorridoEm}}" }
+
+### Consulta consome os alertas dentro dos 30 segundos de validade
+GET {{Garupa_API_HostAddress}}/api/v1/vestivel/{{dispositivoId}}/alertas/pendentes
+
+### Desparear elimina as pendências
+DELETE {{Garupa_API_HostAddress}}/api/v1/usuarios/{{usuarioId}}/vestivel
+
+### Relato dentro do município. Repetir o evento mantém o mesmo relato.
+POST {{Garupa_API_HostAddress}}/api/v1/relatos
+Content-Type: application/json
+
+{
+  "eventoId": "f61061c7-a2e1-4f94-9425-d14c2f4c3455",
+  "usuarioId": {{usuarioId}},
+  "tipo": "buraco",
+  "lat": -23.55,
+  "lon": -46.63,
+  "descricao": "Exemplo fictício para demonstração"
+}
+
+### Excluir o usuário de demonstração e seus dados dependentes
+DELETE {{Garupa_API_HostAddress}}/api/v1/usuarios/{{usuarioId}}
