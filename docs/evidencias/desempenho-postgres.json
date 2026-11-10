@@ -1,0 +1,27 @@
+{
+  "executadoEm": "2026-11-10T18:05:33.2517972+00:00",
+  "runtime": ".NET 10.0.15",
+  "sistema": "Microsoft Windows 10.0.26200",
+  "servidor": "Kestrel HTTP loopback",
+  "banco": "PostgreSQL",
+  "dados": "10000 células sintéticas em schema exclusivo e removido ao final",
+  "aquecimentosPorRota": 5,
+  "requisicoesPorRota": 100,
+  "concorrencia": 4,
+  "metaP95Ms": 500,
+  "metaMaxBytes": 200000,
+  "risco": {
+    "p50Ms": 260.4517,
+    "p95Ms": 342.2147,
+    "maxMs": 384.5775,
+    "maxBytes": 156701,
+    "minPontos": 500
+  },
+  "plano": {
+    "p50Ms": 308.6685,
+    "p95Ms": 434.5979,
+    "maxMs": 468.0217,
+    "maxBytes": 156973,
+    "minPontos": 500
+  }
+}
