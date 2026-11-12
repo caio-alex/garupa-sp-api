@@ -1,5 +1,7 @@
 # Garupa SP API
 
+Global Solution 2026.2 · CitizenTech · Mobile Development e IoT.
+
 API em .NET 10 LTS com camadas Domain, Application, Infrastructure e API. PostgreSQL é o banco da aplicação. Os testes usam SQLite em memória e PostgreSQL com WebApplicationFactory.
 
 ## Executar
