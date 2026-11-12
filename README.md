@@ -37,7 +37,7 @@ Para parar essa instância após o desenvolvimento, execute na raiz do projeto.
 & 'C:\Program Files\PostgreSQL\17\bin\pg_ctl.exe' -D "$PWD\.local\postgres" -w -m fast stop
 ```
 
-O Swagger está em `/swagger` no ambiente Development. Ele documenta os códigos HTTP, os schemas de resposta, os parâmetros e exemplos fictícios dos corpos de requisição. A URL local aparece no terminal. O arquivo `Garupa API/Garupa API.http` contém exemplos do fluxo.
+O Swagger está disponível em `/swagger` em todos os ambientes, inclusive Production. O documento OpenAPI está em `/swagger/v1/swagger.json`. Ele documenta os códigos HTTP, os schemas de resposta, os parâmetros e exemplos fictícios dos corpos de requisição. A URL local aparece no terminal. O arquivo `Garupa API/Garupa API.http` contém exemplos do fluxo.
 
 ## Cadastro e SOS
 
