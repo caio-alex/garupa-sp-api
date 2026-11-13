@@ -4,6 +4,32 @@ Global Solution 2026.2 · CitizenTech · Mobile Development e IoT.
 
 API em .NET 10 LTS com camadas Domain, Application, Infrastructure e API. PostgreSQL é o banco da aplicação. Os testes usam SQLite em memória e PostgreSQL com WebApplicationFactory.
 
+## Membros
+- Caio Alexandre dos Santos - RM: 558460
+
+- Leandro do Nascimento Souza - RM: 558893
+
+- Rafael de Mônaco Maniezo - RM: 556079
+
+- Vinicius Rozas Panucci de Paula Cont - RM: 555338
+
+## Nossa Solução
+
+Garupa SP é um app para o motociclista de São Paulo, em especial o entregador por aplicativo. Depois de um cadastro rápido (contatos, ficha médica e como ele usa a moto), o app mostra os poucos pontos e horários em que o risco de sinistro grave é maior para as áreas em que ele roda, avisa durante o trajeto, traz mensagens de conscientização no momento certo, detecta a queda pelo sensor do celular e, se o motociclista não responder, registra um pedido de socorro com a localização e a ficha médica. Um vestível opcional (pulseira) confirma a queda e permite cancelar ou pedir ajuda sem tocar no celular.
+### Jornada do motociclista
+1.Cadastro (uma vez, em até 2 minutos): nome, telefone e um contato de emergência; depois, se quiser, ficha médica, "como você usa a moto no dia a dia?" (entregador, trabalho, ida e volta, lazer) e as áreas em que costuma rodar. Os consentimentos são pedidos por tipo de dado.
+
+2.Antes do turno: o app mostra o plano do dia, com os pontos críticos das áreas do usuário, no horário e com a chuva previstos, e uma mensagem de conscientização escolhida pelo contexto e pelo perfil.
+
+3.No trajeto: o usuário toca em "Iniciar turno" e abre o aplicativo de entregas; o Garupa SP monitora em segundo plano, com uma notificação fixa. Os alertas dos pontos de maior risco chegam como som curto, vibração e um banner de poucas palavras que some sozinho ("Ponto crítico à frente: reduza"), uma vez por ponto, sem exigir toque nem leitura. Mensagens de conscientização só aparecem com a moto parada.
+
+4.Se houver queda: o app combina impacto forte, queda brusca de velocidade e imobilidade, e abre uma notificação de alta prioridade com alarme alto, contagem de 30 s visível e o botão "Estou bem"; tocar nela abre a tela de contagem.
+
+5.Sem resposta: o app grava o SOS na API, que gera um link de acompanhamento para os contatos; a testemunha vê a ficha médica, instruções curtas e a discagem do 192 pronta para confirmar.
+
+6.Depois: o motociclista registra o local do acidente ou um perigo (buraco, óleo na pista) em dois toques; o relato vira uma camada observada, que o Infosiga não tem.
+
+
 ## Executar
 
 Instale o SDK .NET 10.0.404 ou uma atualização do mesmo feature band e o PostgreSQL. O `global.json` fixa o SDK e inclui `.local/dotnet` na busca, com fallback para a instalação do sistema. Isso permite ao Visual Studio 2026 localizar o SDK local mesmo quando o instalador do IDE trouxe outra versão. O manifesto `dotnet-tools.json` fixa o `dotnet-ef` 10.0.15. O script `Use-DotNet.ps1` seleciona também o host e o runtime locais para os comandos do terminal. Configure a conexão por variável de ambiente no PowerShell usando um banco local de desenvolvimento.
