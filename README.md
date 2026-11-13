@@ -162,6 +162,9 @@ O catálogo inclui mensagens gerais para chuva, noite, domingo e ponto crítico,
 
 O vestível recebe `turno_ativo`, `ponto_critico`, `mensagem`, `contagem_queda`, `sos_enviado`, `cancelado` e `turno_encerrado`. A expiração usa o horário do evento em UTC. Cada consulta consome até 100 registros, em ordem de ID. Desparear ou trocar o dispositivo elimina as pendências anteriores. Dispositivo sem pareamento recebe 404.
 
+<img width="626" height="890" alt="image" src="https://github.com/user-attachments/assets/a75fc4e8-f9bb-423d-8a30-e8b1004fb47e" />
+
+
 ## Carga do risco
 
 Depois de preparar o banco, importe o CSV produzido pelo modelo.
