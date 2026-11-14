@@ -32,18 +32,25 @@ Garupa SP é um app para o motociclista de São Paulo, em especial o entregador 
 
 ## Executar
 
-Instale o SDK .NET 10.0.404 ou uma atualização do mesmo feature band e o PostgreSQL. O `global.json` fixa o SDK e inclui `.local/dotnet` na busca, com fallback para a instalação do sistema. Isso permite ao Visual Studio 2026 localizar o SDK local mesmo quando o instalador do IDE trouxe outra versão. O manifesto `dotnet-tools.json` fixa o `dotnet-ef` 10.0.15. O script `Use-DotNet.ps1` seleciona também o host e o runtime locais para os comandos do terminal. Configure a conexão por variável de ambiente no PowerShell usando um banco local de desenvolvimento.
+Instale o SDK .NET 10.0.404 ou uma atualização do mesmo feature band e o PostgreSQL 17. O `global.json` fixa o SDK e inclui `.local/dotnet` na busca, com fallback para a instalação do sistema. Isso permite ao Visual Studio 2026 localizar o SDK local mesmo quando o instalador do IDE trouxe outra versão. O manifesto `dotnet-tools.json` fixa o `dotnet-ef` 10.0.15. O script `Use-DotNet.ps1` seleciona também o host e o runtime locais para os comandos do terminal.
+
+No Windows, abra o PowerShell na raiz do repositório e execute a sequência abaixo no mesmo terminal. Substitua os valores de usuário e senha pelos escolhidos para a instância local do projeto. O script do banco usa os binários do PostgreSQL 17 instalados em `C:\Program Files\PostgreSQL\17\bin`.
 
 ```powershell
 .\scripts\Use-DotNet.ps1
-$env:ConnectionStrings__GarupaDb = 'Host=localhost;Database=garupa;Username=SEU_USUARIO;Password=SUA_SENHA'
+$env:ConnectionStrings__GarupaDb = 'Host=127.0.0.1;Port=5433;Database=garupa_sp;Username=SEU_USUARIO;Password=SUA_SENHA'
+.\scripts\Start-LocalDatabase.ps1
 dotnet tool restore
 dotnet restore 'Garupa API.sln'
-dotnet run --project 'Garupa API' -- preparar-banco
-dotnet run --project 'Garupa API'
+dotnet run --project 'Garupa API' --launch-profile https -- preparar-banco
+dotnet run --project 'Garupa API' --launch-profile https
 ```
 
-O comando `preparar-banco` aplica as migrations e converte fichas e tokens antigos para armazenamento protegido. Execute-o antes de iniciar a API após atualizar o projeto. A conversão pode ser repetida e mantém os links de acompanhamento existentes.
+O comando `preparar-banco` aplica as migrations e converte fichas e tokens antigos para armazenamento protegido. Execute-o com o banco iniciado, antes de iniciar a API após atualizar o projeto. A conversão pode ser repetida e mantém os links de acompanhamento existentes.
+
+Com o perfil `https`, abra [Swagger](https://localhost:7111/swagger/index.html). Para verificar a conexão com o banco, consulte [Saúde da API](https://localhost:7111/api/v1/saude). Se o navegador indicar um certificado de desenvolvimento sem confiança, execute `dotnet dev-certs https --trust` e reabra a página.
+
+Para usar um PostgreSQL já configurado, ajuste a variável de conexão para o host, a porta, o banco e as credenciais dessa instância e execute os comandos de restauração, preparação e execução. O script `Start-LocalDatabase.ps1` é destinado à instância local descrita abaixo. A variável definida com `$env:` vale para o terminal atual e os processos iniciados por ele. Para iniciar pelo Visual Studio, configure a conexão nos User Secrets do projeto `Garupa API`.
 
 Em desenvolvimento, a chave AES de 256 bits é criada em `.local/keys/ficha-medica.key`. Faça backup desse arquivo junto com o banco. Nos demais ambientes, configure `Criptografia__Chave` em Base64 ou `Criptografia__ArquivoChave` apontando para uma chave persistente de 32 bytes. A API exige uma chave existente nesses ambientes. Trocar ou perder a chave impede a leitura dos dados protegidos.
 
@@ -102,8 +109,17 @@ Erros usam ProblemDetails com mensagens genéricas. Os logs JSON registram méto
 
 ## Testes
 
+Na raiz do repositório, selecione o SDK e execute os testes. Pare a API no Visual Studio com **Shift + F5** ou no terminal com **Ctrl + C** antes de usar a compilação padrão, para liberar os arquivos de saída.
+
 ```powershell
+.\scripts\Use-DotNet.ps1
 dotnet test 'Garupa API.sln'
+```
+
+Para executar os testes mantendo a API aberta, use uma pasta de compilação separada.
+
+```powershell
+dotnet test 'Garupa API.sln' --artifacts-path '.local/postgres-tests'
 ```
 
 Os testes cobrem os endpoints principais, persistência, validação, criptografia, migração de dados antigos, reenvio, conflitos de estado, privacidade dos logs, retenção, horários habituais, Swagger e tamanho das respostas. A execução padrão usa SQLite e dispensa o PostgreSQL. Os testes exclusivos de concorrência e desempenho do PostgreSQL são ignorados nessa execução.
