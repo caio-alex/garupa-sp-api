@@ -6,15 +6,73 @@ using Garupa.Infrastructure.Data;
 using Garupa.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Garupa.Infrastructure.Security;
+using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.IdentityModel.Tokens;
+using Garupa.Api.Security;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Logging.AddJsonConsole();
 
 // Controllers e documentação
-builder.Services.AddControllers();
+builder.Services.AddScoped<VerificacaoProprietarioFilter>();
+builder.Services.AddSingleton<EmissorJwt>();
+builder.Services.AddControllers(options => options.Filters.AddService<VerificacaoProprietarioFilter>());
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.MapInboundClaims = false;
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidIssuer = "garupa-api",
+            ValidateAudience = true,
+            ValidAudience = "garupa-app",
+            ValidateIssuerSigningKey = true,
+            ValidateLifetime = true,
+            RequireExpirationTime = true,
+            ClockSkew = TimeSpan.Zero,
+            ValidAlgorithms = [SecurityAlgorithms.HmacSha256],
+            IssuerSigningKeyResolver = (_, _, _, _) =>
+            {
+                var valor = builder.Configuration["Jwt:Chave"];
+                if (string.IsNullOrWhiteSpace(valor)) return [];
+                try
+                {
+                    var chave = Convert.FromBase64String(valor);
+                    return chave.Length >= 32 ? [new SymmetricSecurityKey(chave)] : [];
+                }
+                catch (FormatException) { return []; }
+            }
+        };
+    });
+builder.Services.AddAuthorization(options => options.FallbackPolicy =
+    new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build());
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.AddFixedWindowLimiter("login", limiter =>
+    {
+        limiter.PermitLimit = 10;
+        limiter.Window = TimeSpan.FromMinutes(1);
+        limiter.QueueLimit = 0;
+    });
+});
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
+    options.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.OpenApiSecurityScheme
+    {
+        Type = Microsoft.OpenApi.SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT",
+        Description = "Informe o token recebido no cadastro ou no login."
+    });
+    options.AddSecurityRequirement(document => new Microsoft.OpenApi.OpenApiSecurityRequirement
+    {
+        [new Microsoft.OpenApi.OpenApiSecuritySchemeReference("Bearer", document)] = []
+    });
     options.SwaggerDoc("v1", new Microsoft.OpenApi.OpenApiInfo
     {
         Title = "Garupa SP API",
@@ -133,6 +191,8 @@ app.UseSwagger();
 app.UseSwaggerUI();
 
 app.UseHttpsRedirection();
+app.UseRateLimiter();
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();

@@ -2,6 +2,7 @@ using System.ComponentModel.DataAnnotations;
 using Garupa.Application.Interfaces;
 using Garupa.Domain.Enums;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Garupa.Api.Controllers;
 
@@ -39,6 +40,7 @@ public class SosController(ISosService service) : ControllerBase
             ? NoContent() : Problem(statusCode: 404, title: "SOS não encontrado.");
 
     [HttpGet("acompanhar/{token}")]
+    [AllowAnonymous]
     public async Task<IActionResult> Acompanhar(string token, CancellationToken cancellationToken)
     {
         var sos = await service.AcompanharAsync(token, cancellationToken);

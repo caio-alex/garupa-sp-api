@@ -1,10 +1,12 @@
 using Garupa.Infrastructure.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Garupa.Api.Controllers;
 
 [ApiController]
+[AllowAnonymous]
 public class SaudeController(GarupaDbContext context) : ControllerBase
 {
     [HttpGet("/api/v1/saude")]

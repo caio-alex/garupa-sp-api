@@ -25,11 +25,11 @@ public class VestivelService(IVestivelRepository repository, IUsuarioRepository 
         await repository.DesparearAsync(usuarioId, ct);
         return true;
     }
-    public async Task<bool> EventoAsync(string dispositivoId, string tipo, DateTime ocorridoEm, CancellationToken ct)
+    public async Task<bool> EventoAsync(int usuarioId, string dispositivoId, string tipo, DateTime ocorridoEm, CancellationToken ct)
     {
         var vestivel = await repository.PorDispositivoAsync(dispositivoId, ct);
-        if (vestivel is null) return false;
-        var evento = new EventoVestivel(vestivel.UsuarioId, dispositivoId, tipo, ocorridoEm, clock.GetUtcNow().UtcDateTime);
+        if (vestivel is null || vestivel.UsuarioId != usuarioId) return false;
+        var evento = new EventoVestivel(usuarioId, dispositivoId, tipo, ocorridoEm, clock.GetUtcNow().UtcDateTime);
         await repository.AdicionarEventoAsync(evento, ct);
         return true;
     }
@@ -46,9 +46,10 @@ public class VestivelService(IVestivelRepository repository, IUsuarioRepository 
         if (await usuarios.ObterPorIdAsync(usuarioId, ct) is null) return null;
         return await repository.ConsumirEventosAsync(usuarioId, clock.GetUtcNow().UtcDateTime, ct);
     }
-    public async Task<IReadOnlyList<AlertaPendente>?> AlertasAsync(string dispositivoId, CancellationToken ct)
+    public async Task<IReadOnlyList<AlertaPendente>?> AlertasAsync(int usuarioId, string dispositivoId, CancellationToken ct)
     {
-        if (await repository.PorDispositivoAsync(dispositivoId, ct) is null) return null;
-        return await repository.ConsumirAlertasAsync(dispositivoId, clock.GetUtcNow().UtcDateTime, ct);
+        var vestivel = await repository.PorDispositivoAsync(dispositivoId, ct);
+        if (vestivel is null || vestivel.UsuarioId != usuarioId) return null;
+        return await repository.ConsumirAlertasAsync(usuarioId, dispositivoId, clock.GetUtcNow().UtcDateTime, ct);
     }
 }

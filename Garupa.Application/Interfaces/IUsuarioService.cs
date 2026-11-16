@@ -13,7 +13,8 @@ public interface IUsuarioService
         string telefone,
         string nomeContato,
         string telefoneContato,
-        CancellationToken cancellationToken = default);
+        CancellationToken cancellationToken = default,
+        string? senhaHash = null);
 
     Task<Usuario?> ObterPorIdAsync(
         int id,

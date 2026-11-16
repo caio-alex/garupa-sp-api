@@ -67,6 +67,8 @@ public class GarupaDbContext : DbContext
                 .IsRequired()
                 .HasMaxLength(20);
 
+            entity.HasIndex(u => u.Telefone).IsUnique().HasFilter("\"SenhaHash\" IS NOT NULL");
+
             entity.HasMany(u => u.Contatos)
                 .WithOne()
                 .HasForeignKey(c => c.UsuarioId)

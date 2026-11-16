@@ -45,9 +45,11 @@ public class UsuarioService : IUsuarioService
         string telefone,
         string nomeContato,
         string telefoneContato,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        string? senhaHash = null)
     {
         var usuario = new Usuario(nome, telefone);
+        if (senhaHash is not null) usuario.DefinirSenhaHash(senhaHash);
         usuario.AdicionarContato(new ContatoEmergencia(nomeContato, telefoneContato));
 
         await _usuarioRepository.AdicionarAsync(

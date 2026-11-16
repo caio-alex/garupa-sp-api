@@ -15,12 +15,13 @@ public class VestivelERelatoTests
     {
         using var factory = new ApiFactory();
         using var client = factory.CriarCliente();
+        using var outroClient = factory.CriarCliente();
         var id = await Cenarios.CadastrarAsync(client);
-        var outro = await Cenarios.CadastrarAsync(client);
-        Assert.Equal(HttpStatusCode.NotFound, (await client.PostAsJsonAsync("/api/v1/eventos-vestivel", Evento(factory))).StatusCode);
+        var outro = await Cenarios.CadastrarAsync(outroClient);
+        Assert.Equal(HttpStatusCode.Forbidden, (await client.PostAsJsonAsync("/api/v1/eventos-vestivel", Evento(factory))).StatusCode);
         Assert.Equal(HttpStatusCode.NoContent, (await client.PostAsJsonAsync($"/api/v1/usuarios/{id}/vestivel", new { dispositivoId = "teste" })).StatusCode);
         Assert.Equal(HttpStatusCode.NoContent, (await client.PostAsJsonAsync($"/api/v1/usuarios/{id}/vestivel", new { dispositivoId = "teste" })).StatusCode);
-        Assert.Equal(HttpStatusCode.Conflict, (await client.PostAsJsonAsync($"/api/v1/usuarios/{outro}/vestivel", new { dispositivoId = "teste" })).StatusCode);
+        Assert.Equal(HttpStatusCode.Conflict, (await outroClient.PostAsJsonAsync($"/api/v1/usuarios/{outro}/vestivel", new { dispositivoId = "teste" })).StatusCode);
         Assert.Equal(HttpStatusCode.Accepted, (await client.PostAsJsonAsync("/api/v1/eventos-vestivel", Evento(factory))).StatusCode);
         Assert.Single((await client.GetFromJsonAsync<JsonElement[]>($"/api/v1/eventos-vestivel/pendentes?usuarioId={id}"))!);
         Assert.Empty((await client.GetFromJsonAsync<JsonElement[]>($"/api/v1/eventos-vestivel/pendentes?usuarioId={id}"))!);
@@ -31,7 +32,7 @@ public class VestivelERelatoTests
         factory.Clock.Agora = factory.Clock.Agora.AddSeconds(30);
         Assert.Empty((await client.GetFromJsonAsync<JsonElement[]>("/api/v1/vestivel/teste/alertas/pendentes"))!);
         Assert.Equal(HttpStatusCode.NoContent, (await client.DeleteAsync($"/api/v1/usuarios/{id}/vestivel")).StatusCode);
-        Assert.Equal(HttpStatusCode.NotFound, (await client.GetAsync("/api/v1/vestivel/teste/alertas/pendentes")).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, (await client.GetAsync("/api/v1/vestivel/teste/alertas/pendentes")).StatusCode);
         Assert.Equal(HttpStatusCode.NotFound, (await client.PostAsJsonAsync($"/api/v1/usuarios/{id}/alertas-vestivel", Alerta(factory))).StatusCode);
         using var scope = factory.Services.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<GarupaDbContext>();
@@ -51,7 +52,7 @@ public class VestivelERelatoTests
         Assert.Equal(HttpStatusCode.NoContent, (await client.PostAsJsonAsync($"/api/v1/usuarios/{id}/vestivel", new { dispositivoId = "novo" })).StatusCode);
         Assert.Empty((await client.GetFromJsonAsync<JsonElement[]>($"/api/v1/eventos-vestivel/pendentes?usuarioId={id}"))!);
         Assert.Empty((await client.GetFromJsonAsync<JsonElement[]>("/api/v1/vestivel/novo/alertas/pendentes"))!);
-        Assert.Equal(HttpStatusCode.NotFound, (await client.PostAsJsonAsync("/api/v1/eventos-vestivel", Evento(factory))).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, (await client.PostAsJsonAsync("/api/v1/eventos-vestivel", Evento(factory))).StatusCode);
     }
 
     [Fact]

@@ -14,5 +14,5 @@ public interface IVestivelRepository
     Task AdicionarEventoAsync(EventoVestivel evento, CancellationToken ct);
     Task AdicionarAlertaAsync(AlertaVestivel alerta, CancellationToken ct);
     Task<IReadOnlyList<EventoPendente>> ConsumirEventosAsync(int usuarioId, DateTime agora, CancellationToken ct);
-    Task<IReadOnlyList<AlertaPendente>> ConsumirAlertasAsync(string dispositivoId, DateTime agora, CancellationToken ct);
+    Task<IReadOnlyList<AlertaPendente>> ConsumirAlertasAsync(int usuarioId, string dispositivoId, DateTime agora, CancellationToken ct);
 }

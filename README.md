@@ -4,20 +4,53 @@ Global Solution 2026.2 · CitizenTech · Mobile Development e IoT.
 
 API em .NET 10 LTS com camadas Domain, Application, Infrastructure e API. PostgreSQL é o banco da aplicação. Os testes usam SQLite em memória e PostgreSQL com WebApplicationFactory.
 
+## Membros
+- Caio Alexandre dos Santos - RM: 558460
+
+- Leandro do Nascimento Souza - RM: 558893
+
+- Rafael de Mônaco Maniezo - RM: 556079
+
+- Vinicius Rozas Panucci de Paula Cont - RM: 555338
+
+## Nossa Solução
+
+Garupa SP é um app para o motociclista de São Paulo, em especial o entregador por aplicativo. Depois de um cadastro rápido (contatos, ficha médica e como ele usa a moto), o app mostra os poucos pontos e horários em que o risco de sinistro grave é maior para as áreas em que ele roda, avisa durante o trajeto, traz mensagens de conscientização no momento certo, detecta a queda pelo sensor do celular e, se o motociclista não responder, registra um pedido de socorro com a localização e a ficha médica. Um vestível opcional (pulseira) confirma a queda e permite cancelar ou pedir ajuda sem tocar no celular.
+### Jornada do motociclista
+1.Cadastro (uma vez, em até 2 minutos): nome, telefone e um contato de emergência; depois, se quiser, ficha médica, "como você usa a moto no dia a dia?" (entregador, trabalho, ida e volta, lazer) e as áreas em que costuma rodar. Os consentimentos são pedidos por tipo de dado.
+
+2.Antes do turno: o app mostra o plano do dia, com os pontos críticos das áreas do usuário, no horário e com a chuva previstos, e uma mensagem de conscientização escolhida pelo contexto e pelo perfil.
+
+3.No trajeto: o usuário toca em "Iniciar turno" e abre o aplicativo de entregas; o Garupa SP monitora em segundo plano, com uma notificação fixa. Os alertas dos pontos de maior risco chegam como som curto, vibração e um banner de poucas palavras que some sozinho ("Ponto crítico à frente: reduza"), uma vez por ponto, sem exigir toque nem leitura. Mensagens de conscientização só aparecem com a moto parada.
+
+4.Se houver queda: o app combina impacto forte, queda brusca de velocidade e imobilidade, e abre uma notificação de alta prioridade com alarme alto, contagem de 30 s visível e o botão "Estou bem"; tocar nela abre a tela de contagem.
+
+5.Sem resposta: o app grava o SOS na API, que gera um link de acompanhamento para os contatos; a testemunha vê a ficha médica, instruções curtas e a discagem do 192 pronta para confirmar.
+
+6.Depois: o motociclista registra o local do acidente ou um perigo (buraco, óleo na pista) em dois toques; o relato vira uma camada observada, que o Infosiga não tem.
+
+
 ## Executar
 
-Instale o SDK .NET 10.0.404 ou uma atualização do mesmo feature band e o PostgreSQL. O `global.json` fixa o SDK e inclui `.local/dotnet` na busca, com fallback para a instalação do sistema. Isso permite ao Visual Studio 2026 localizar o SDK local mesmo quando o instalador do IDE trouxe outra versão. O manifesto `dotnet-tools.json` fixa o `dotnet-ef` 10.0.15. O script `Use-DotNet.ps1` seleciona também o host e o runtime locais para os comandos do terminal. Configure a conexão por variável de ambiente no PowerShell usando um banco local de desenvolvimento.
+Instale o SDK .NET 10.0.404 ou uma atualização do mesmo feature band e o PostgreSQL 17. O `global.json` fixa o SDK e inclui `.local/dotnet` na busca, com fallback para a instalação do sistema. Isso permite ao Visual Studio 2026 localizar o SDK local mesmo quando o instalador do IDE trouxe outra versão. O manifesto `dotnet-tools.json` fixa o `dotnet-ef` 10.0.15. O script `Use-DotNet.ps1` seleciona também o host e o runtime locais para os comandos do terminal.
+
+No Windows, abra o PowerShell na raiz do repositório e execute a sequência abaixo no mesmo terminal. Substitua os valores de usuário e senha pelos escolhidos para a instância local do projeto. O script do banco usa os binários do PostgreSQL 17 instalados em `C:\Program Files\PostgreSQL\17\bin`.
 
 ```powershell
 .\scripts\Use-DotNet.ps1
-$env:ConnectionStrings__GarupaDb = 'Host=localhost;Database=garupa;Username=SEU_USUARIO;Password=SUA_SENHA'
+$env:ConnectionStrings__GarupaDb = 'Host=127.0.0.1;Port=5433;Database=garupa_sp;Username=SEU_USUARIO;Password=SUA_SENHA'
+.\scripts\Start-LocalDatabase.ps1
 dotnet tool restore
 dotnet restore 'Garupa API.sln'
-dotnet run --project 'Garupa API' -- preparar-banco
-dotnet run --project 'Garupa API'
+dotnet run --project 'Garupa API' --launch-profile https -- preparar-banco
+dotnet run --project 'Garupa API' --launch-profile https
 ```
 
-O comando `preparar-banco` aplica as migrations e converte fichas e tokens antigos para armazenamento protegido. Execute-o antes de iniciar a API após atualizar o projeto. A conversão pode ser repetida e mantém os links de acompanhamento existentes.
+O comando `preparar-banco` aplica as migrations e converte fichas e tokens antigos para armazenamento protegido. Execute-o com o banco iniciado, antes de iniciar a API após atualizar o projeto. A conversão pode ser repetida e mantém os links de acompanhamento existentes.
+
+Com o perfil `https`, abra [Swagger](https://localhost:7111/swagger/index.html). Para verificar a conexão com o banco, consulte [Saúde da API](https://localhost:7111/api/v1/saude). Se o navegador indicar um certificado de desenvolvimento sem confiança, execute `dotnet dev-certs https --trust` e reabra a página.
+
+Para usar um PostgreSQL já configurado, ajuste a variável de conexão para o host, a porta, o banco e as credenciais dessa instância e execute os comandos de restauração, preparação e execução. O script `Start-LocalDatabase.ps1` é destinado à instância local descrita abaixo. A variável definida com `$env:` vale para o terminal atual e os processos iniciados por ele. Para iniciar pelo Visual Studio, configure a conexão nos User Secrets do projeto `Garupa API`.
 
 Em desenvolvimento, a chave AES de 256 bits é criada em `.local/keys/ficha-medica.key`. Faça backup desse arquivo junto com o banco. Nos demais ambientes, configure `Criptografia__Chave` em Base64 ou `Criptografia__ArquivoChave` apontando para uma chave persistente de 32 bytes. A API exige uma chave existente nesses ambientes. Trocar ou perder a chave impede a leitura dos dados protegidos.
 
@@ -76,8 +109,17 @@ Erros usam ProblemDetails com mensagens genéricas. Os logs JSON registram méto
 
 ## Testes
 
+Na raiz do repositório, selecione o SDK e execute os testes. Pare a API no Visual Studio com **Shift + F5** ou no terminal com **Ctrl + C** antes de usar a compilação padrão, para liberar os arquivos de saída.
+
 ```powershell
+.\scripts\Use-DotNet.ps1
 dotnet test 'Garupa API.sln'
+```
+
+Para executar os testes mantendo a API aberta, use uma pasta de compilação separada.
+
+```powershell
+dotnet test 'Garupa API.sln' --artifacts-path '.local/postgres-tests'
 ```
 
 Os testes cobrem os endpoints principais, persistência, validação, criptografia, migração de dados antigos, reenvio, conflitos de estado, privacidade dos logs, retenção, horários habituais, Swagger e tamanho das respostas. A execução padrão usa SQLite e dispensa o PostgreSQL. Os testes exclusivos de concorrência e desempenho do PostgreSQL são ignorados nessa execução.
@@ -135,6 +177,9 @@ Risco e plano retornam até 500 pontos, respeitando um orçamento de 190.000 byt
 O catálogo inclui mensagens gerais para chuva, noite, domingo e ponto crítico, além de mensagens específicas por tipo de uso. A origem de cada texto acompanha a resposta. As fontes e a revisão técnica estão em `Garupa.Infrastructure/Resources/README.md`.
 
 O vestível recebe `turno_ativo`, `ponto_critico`, `mensagem`, `contagem_queda`, `sos_enviado`, `cancelado` e `turno_encerrado`. A expiração usa o horário do evento em UTC. Cada consulta consome até 100 registros, em ordem de ID. Desparear ou trocar o dispositivo elimina as pendências anteriores. Dispositivo sem pareamento recebe 404.
+
+<img width="626" height="890" alt="image" src="https://github.com/user-attachments/assets/a75fc4e8-f9bb-423d-8a30-e8b1004fb47e" />
+
 
 ## Carga do risco
 

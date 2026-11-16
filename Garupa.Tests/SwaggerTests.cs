@@ -55,9 +55,16 @@ public class SwaggerTests
         document.SerializeAsV3(new OpenApiJsonWriter(buffer));
         using var json = JsonDocument.Parse(buffer.ToString());
         var paths = json.RootElement.GetProperty("paths");
+        var login = paths.GetProperty("/api/v1/autenticacao/login").GetProperty("post");
+        Assert.True(login.GetProperty("responses").TryGetProperty("200", out _));
+        Assert.True(login.GetProperty("responses").TryGetProperty("401", out _));
+        Assert.True(login.GetProperty("responses").TryGetProperty("429", out _));
         var cadastro = paths.GetProperty("/api/v1/usuarios").GetProperty("post");
         Assert.True(cadastro.GetProperty("responses").TryGetProperty("201", out _));
+        Assert.True(cadastro.GetProperty("responses").TryGetProperty("409", out _));
         Assert.False(cadastro.GetProperty("responses").TryGetProperty("200", out _));
+        var consulta = paths.GetProperty("/api/v1/usuarios/{id}").GetProperty("get");
+        Assert.Equal("Token ausente, inválido ou expirado.", consulta.GetProperty("responses").GetProperty("401").GetProperty("description").GetString());
         var exemplo = cadastro.GetProperty("requestBody").GetProperty("content").GetProperty("application/json").GetProperty("example");
         Assert.True(exemplo.TryGetProperty("contato", out _));
         var sos = paths.GetProperty("/api/v1/sos").GetProperty("post").GetProperty("responses");

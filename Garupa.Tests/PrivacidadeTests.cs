@@ -73,7 +73,7 @@ public class PrivacidadeTests
         await client.PostAsJsonAsync("/api/v1/relatos", new { eventoId = Guid.NewGuid(), usuarioId = id, tipo = "buraco", lat = -23.55, lon = -46.63, descricao = "Fictício" });
         await client.PostAsJsonAsync("/api/v1/sos", new { eventoId = Guid.NewGuid(), usuarioId = id, tipo = "queda", origem = "celular", ocorridoEm = factory.Clock.Agora, lat = -23.55, lon = -46.63 });
         Assert.Equal(HttpStatusCode.NoContent, (await client.DeleteAsync($"/api/v1/usuarios/{id}")).StatusCode);
-        Assert.Equal(HttpStatusCode.NotFound, (await client.DeleteAsync($"/api/v1/usuarios/{id}")).StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, (await client.DeleteAsync($"/api/v1/usuarios/{id}")).StatusCode);
         using var scope = factory.Services.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<GarupaDbContext>();
         Assert.Empty(await context.Usuarios.ToListAsync());
@@ -103,7 +103,7 @@ public class PrivacidadeTests
             localizacaoEmUso = false, localizacaoEmSegundoPlano = true, fichaMedica = false,
             historicoDeLocais = false, perfilDeUso = false
         })).StatusCode);
-        Assert.Equal(HttpStatusCode.NotFound, (await client.PutAsJsonAsync("/api/v1/usuarios/999/ficha-medica", new { })).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, (await client.PutAsJsonAsync("/api/v1/usuarios/999/ficha-medica", new { })).StatusCode);
     }
 
     [Fact]

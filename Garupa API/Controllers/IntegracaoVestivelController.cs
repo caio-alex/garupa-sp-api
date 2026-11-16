@@ -24,7 +24,8 @@ public class IntegracaoVestivelController(IVestivelService service) : Controller
     public async Task<IActionResult> Evento(EventoVestivelRequest request, CancellationToken ct)
     {
         if (request.OcorridoEm!.Value.Offset != TimeSpan.Zero) return Problem(statusCode: 400, title: "Horário inválido.");
-        return await service.EventoAsync(request.DispositivoId, request.Tipo, request.OcorridoEm.Value.UtcDateTime, ct)
+        var usuarioId = int.Parse(User.FindFirst("sub")!.Value);
+        return await service.EventoAsync(usuarioId, request.DispositivoId, request.Tipo, request.OcorridoEm.Value.UtcDateTime, ct)
             ? Accepted() : Ausente();
     }
     [HttpGet("eventos-vestivel/pendentes")]
@@ -36,7 +37,8 @@ public class IntegracaoVestivelController(IVestivelService service) : Controller
     [HttpGet("vestivel/{dispositivoId}/alertas/pendentes")]
     public async Task<IActionResult> Alertas(string dispositivoId, CancellationToken ct)
     {
-        var alertas = await service.AlertasAsync(dispositivoId, ct);
+        var usuarioId = int.Parse(User.FindFirst("sub")!.Value);
+        var alertas = await service.AlertasAsync(usuarioId, dispositivoId, ct);
         return alertas is null ? Ausente() : Ok(alertas);
     }
     private ObjectResult Ausente() => Problem(statusCode: 404, title: "Usuário ou pareamento não encontrado.");

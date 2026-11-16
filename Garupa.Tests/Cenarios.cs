@@ -2,20 +2,24 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using Xunit;
+using System.Net.Http.Headers;
 
 namespace Garupa.Tests;
 
 internal static class Cenarios
 {
+    private static int contador;
     public static async Task<int> CadastrarAsync(HttpClient client)
     {
         using var response = await client.PostAsJsonAsync("/api/v1/usuarios", new
         {
-            nome = "Pessoa fictícia", telefone = "11987654321",
+            nome = "Pessoa fictícia", telefone = $"119{Interlocked.Increment(ref contador):D8}", senha = "senha-teste-123",
             contato = new { nome = "Contato fictício", telefone = "1134567890" }
         });
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
-        return (await response.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("usuarioId").GetInt32();
+        var dados = await response.Content.ReadFromJsonAsync<JsonElement>();
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", dados.GetProperty("token").GetString());
+        return dados.GetProperty("usuarioId").GetInt32();
     }
 
     public static async Task ConsentirAsync(HttpClient client, int id, bool ficha = true, bool perfil = true)

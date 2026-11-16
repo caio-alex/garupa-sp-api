@@ -5,6 +5,7 @@ using Garupa.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
+using System.Net.Http.Headers;
 
 namespace Garupa.Tests;
 
@@ -12,7 +13,7 @@ public class FluxoApiTests
 {
     private static object Cadastro(string telefone = "11987654321") => new
     {
-        nome = "Pessoa ficticia", telefone,
+        nome = "Pessoa ficticia", telefone, senha = "senha-teste-123",
         contato = new { nome = "Contato ficticio", telefone = "1134567890" }
     };
 
@@ -26,7 +27,9 @@ public class FluxoApiTests
     {
         var resposta = await client.PostAsJsonAsync("/api/v1/usuarios", Cadastro());
         Assert.Equal(HttpStatusCode.Created, resposta.StatusCode);
-        return (await resposta.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("usuarioId").GetInt32();
+        var dados = await resposta.Content.ReadFromJsonAsync<JsonElement>();
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", dados.GetProperty("token").GetString());
+        return dados.GetProperty("usuarioId").GetInt32();
     }
 
     [Fact]
@@ -40,7 +43,7 @@ public class FluxoApiTests
         var contato = await client.PostAsJsonAsync($"/api/v1/usuarios/{id}/contatos",
             new { nome = "Outro ficticio", telefone = "21987654321" });
         Assert.Equal(HttpStatusCode.Created, contato.StatusCode);
-        Assert.Equal(HttpStatusCode.NotFound, (await client.GetAsync("/api/v1/usuarios/999")).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, (await client.GetAsync("/api/v1/usuarios/999")).StatusCode);
     }
 
     [Fact]
@@ -128,10 +131,11 @@ public class FluxoApiTests
         using var factory = new ApiFactory();
         using var client = factory.CriarCliente();
         Assert.Equal(HttpStatusCode.NotFound, (await client.GetAsync("/api/v1/acompanhar/inexistente")).StatusCode);
-        Assert.Equal(HttpStatusCode.NotFound, (await client.PatchAsync("/api/v1/sos/999/cancelar", null)).StatusCode);
-        Assert.Equal(HttpStatusCode.NotFound, (await client.PatchAsync("/api/v1/sos/999/encerrar", null)).StatusCode);
+        await Cadastrar(client);
+        Assert.Equal(HttpStatusCode.Forbidden, (await client.PatchAsync("/api/v1/sos/999/cancelar", null)).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, (await client.PatchAsync("/api/v1/sos/999/encerrar", null)).StatusCode);
         var resposta = await client.PostAsJsonAsync("/api/v1/sos", Evento(999, Guid.NewGuid().ToString(), factory.Clock.Agora));
-        Assert.Equal(HttpStatusCode.NotFound, resposta.StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, resposta.StatusCode);
     }
 
     [Theory]

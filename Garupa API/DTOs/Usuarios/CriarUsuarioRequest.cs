@@ -13,5 +13,8 @@ public record CriarUsuarioRequest(
     string Telefone,
 
     [Required]
-    CriarContatoRequest Contato
+    CriarContatoRequest Contato,
+
+    [Required, MinLength(8), MaxLength(128)]
+    string Senha
 );

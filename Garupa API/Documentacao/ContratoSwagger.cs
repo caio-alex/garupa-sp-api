@@ -4,12 +4,13 @@ using Garupa.Application.Interfaces;
 using Garupa.Domain.Entities;
 using Garupa.Domain.Repositories;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.OpenApi;
 using Swashbuckle.AspNetCore.SwaggerGen;
 
 namespace Garupa.Api.Documentacao;
 
-public record UsuarioCriado(int UsuarioId);
+public record UsuarioCriado(int UsuarioId, string Token, DateTime ExpiraEm);
 public record ContatoCriado(int ContatoId);
 public record ContatoConsulta(int ContatoId, string Nome, string Telefone);
 public record UsuarioConsulta(int UsuarioId, string Nome, string Telefone, ContatoConsulta[] Contatos);
@@ -19,6 +20,7 @@ public record AcompanhamentoConsulta(PosicaoConsulta Posicao, DateTime Horario, 
 public record RelatoCriado(int RelatoId);
 public record DistritoConsulta(int DistritoId, string Nome);
 public record SaudeConsulta(string Versao, string Banco);
+public record LoginResposta(string Token, DateTime ExpiraEm);
 
 /// <summary>Documenta as respostas HTTP reais e exemplos fictícios de cada operação.</summary>
 public class ContratoSwagger : IOperationFilter
@@ -27,7 +29,8 @@ public class ContratoSwagger : IOperationFilter
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
     private static readonly Dictionary<string, Contrato> Contratos = new()
     {
-        ["POST api/v1/usuarios"] = new("Cadastrar usuário e contato em uma transação", 201, typeof(UsuarioCriado), [400]),
+        ["POST api/v1/autenticacao/login"] = new("Autenticar por telefone e senha", 200, typeof(LoginResposta), [400, 401, 429]),
+        ["POST api/v1/usuarios"] = new("Cadastrar usuário e contato em uma transação", 201, typeof(UsuarioCriado), [400, 409]),
         ["GET api/v1/usuarios/{id}"] = new("Consultar cadastro e contatos", 200, typeof(UsuarioConsulta), [404]),
         ["PUT api/v1/usuarios/{id}"] = new("Editar nome e telefone", 204, null, [400, 404, 409]),
         ["DELETE api/v1/usuarios/{id}"] = new("Excluir usuário e seus dados dependentes", 204, null, [404]),
@@ -69,7 +72,18 @@ public class ContratoSwagger : IOperationFilter
             [contrato.Status.ToString()] = Resposta(context, contrato.Status, contrato.Resposta)
         };
         foreach (var status in contrato.Erros.Append(500))
-            operation.Responses[status.ToString()] = Resposta(context, status, typeof(ProblemDetails));
+            operation.Responses[status.ToString()] = Resposta(context, status,
+                status is 401 or 429 ? null : typeof(ProblemDetails));
+
+        if (context.ApiDescription.ActionDescriptor.EndpointMetadata.OfType<IAllowAnonymous>().Any())
+            operation.Security = [];
+        else
+        {
+            var naoAutenticado = Resposta(context, 401, null);
+            naoAutenticado.Description = "Token ausente, inválido ou expirado.";
+            operation.Responses["401"] = naoAutenticado;
+            operation.Responses["403"] = Resposta(context, 403, null);
+        }
 
         var corpo = context.ApiDescription.ParameterDescriptions.FirstOrDefault(p => p.Source?.Id == "Body");
         if (corpo is not null && ExemplosCorpo(corpo.Type.Name) is { } exemplo && operation.RequestBody?.Content is { } conteudos)
@@ -96,7 +110,8 @@ public class ContratoSwagger : IOperationFilter
             {
                 200 => "Consulta concluída.", 201 => "Recurso criado ou recuperado por idempotência.",
                 202 => "Evento aceito e persistido.", 204 => "Operação concluída sem corpo.",
-                400 => "Entrada inválida.", 404 => "Recurso inexistente ou token expirado.",
+                400 => "Entrada inválida.", 401 => "Telefone ou senha inválidos.",
+                403 => "Usuário sem permissão para o recurso.", 404 => "Recurso inexistente ou token expirado.", 429 => "Limite de tentativas excedido.",
                 409 => "Conflito de estado, consentimento ou concorrência.", 503 => "Banco indisponível.",
                 _ => "Erro interno com mensagem genérica."
             }
@@ -127,7 +142,8 @@ public class ContratoSwagger : IOperationFilter
 
     private static object? ExemplosCorpo(string tipo) => tipo switch
     {
-        "CriarUsuarioRequest" => new { nome = "Pessoa fictícia", telefone = "11987654321", contato = new { nome = "Contato fictício", telefone = "1134567890" } },
+        "CriarUsuarioRequest" => new { nome = "Pessoa fictícia", telefone = "11987654321", senha = "senha-teste-123", contato = new { nome = "Contato fictício", telefone = "1134567890" } },
+        "LoginRequest" => new { telefone = "11987654321", senha = "senha-teste-123" },
         "CriarContatoRequest" => new { nome = "Contato fictício", telefone = "1134567890" },
         "ConsentimentosRequest" => new { localizacaoEmUso = true, localizacaoEmSegundoPlano = true, fichaMedica = true, historicoDeLocais = false, perfilDeUso = true },
         "FichaMedicaRequest" => new { tipoSanguineo = "O+", alergias = "Exemplo fictício", condicoes = "", medicamentos = "" },

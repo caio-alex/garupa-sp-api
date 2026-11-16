@@ -9,6 +9,7 @@ public class Usuario
     public int Id { get; private set; }
     public string Nome { get; private set; } = string.Empty;
     public string Telefone { get; private set; } = string.Empty;
+    public string? SenhaHash { get; private set; }
     public Guid Versao { get; private set; } = Guid.NewGuid();
 
     public FichaMedica? FichaMedica { get; private set; }
@@ -19,6 +20,12 @@ public class Usuario
         => _contatos.AsReadOnly();
 
     private Usuario() { } // Utilizado pelo EF Core
+
+    public void DefinirSenhaHash(string senhaHash)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(senhaHash);
+        SenhaHash = senhaHash;
+    }
 
     public Usuario(string nome, string telefone)
     {

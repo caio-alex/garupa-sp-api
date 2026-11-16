@@ -16,9 +16,9 @@ public class ConteudoTests
     {
         using var factory = new ApiFactory();
         using var client = factory.CriarCliente();
+        var id = await Cenarios.CadastrarAsync(client);
         var distritos = await client.GetFromJsonAsync<JsonElement[]>("/api/v1/distritos");
         Assert.Equal(96, distritos!.Length);
-        var id = await Cenarios.CadastrarAsync(client);
         Assert.Equal(HttpStatusCode.Conflict, (await Cenarios.PerfilAsync(client, id, "lazer", [355030801])).StatusCode);
         await Cenarios.ConsentirAsync(client, id);
         Assert.Equal(HttpStatusCode.NoContent, (await Cenarios.PerfilAsync(client, id, "lazer", [355030801, 355030802])).StatusCode);
@@ -40,6 +40,7 @@ public class ConteudoTests
     {
         using var factory = new ApiFactory();
         using var client = factory.CriarCliente();
+        await Cenarios.CadastrarAsync(client);
         var comuns = await client.GetFromJsonAsync<JsonElement[]>("/api/v1/mensagens?contexto=chuva&tipoDeUso=lazer");
         var entregador = await client.GetFromJsonAsync<JsonElement[]>("/api/v1/mensagens?contexto=chuva&tipoDeUso=entregador_app");
         Assert.Single(comuns!);
@@ -157,6 +158,7 @@ public class ConteudoTests
     {
         using var factory = new ApiFactory();
         using var client = factory.CriarCliente();
+        await Cenarios.CadastrarAsync(client);
         var mensagens = await client.GetFromJsonAsync<JsonElement[]>($"/api/v1/mensagens?contexto={contexto}&tipoDeUso=ida_volta");
         Assert.NotEmpty(mensagens!);
     }

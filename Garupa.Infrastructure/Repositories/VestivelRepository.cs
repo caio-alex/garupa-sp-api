@@ -47,8 +47,8 @@ public class VestivelRepository(GarupaDbContext context) : IVestivelRepository
     public async Task<IReadOnlyList<EventoPendente>> ConsumirEventosAsync(int usuarioId, DateTime agora, CancellationToken ct)
         => (await ConsumirAsync(false, usuarioId, null, agora, ct))
             .Select(e => new EventoPendente(e.Id, e.Tipo, e.OcorridoEm)).ToArray();
-    public async Task<IReadOnlyList<AlertaPendente>> ConsumirAlertasAsync(string dispositivoId, DateTime agora, CancellationToken ct)
-        => (await ConsumirAsync(true, 0, dispositivoId, agora, ct))
+    public async Task<IReadOnlyList<AlertaPendente>> ConsumirAlertasAsync(int usuarioId, string dispositivoId, DateTime agora, CancellationToken ct)
+        => (await ConsumirAsync(true, usuarioId, dispositivoId, agora, ct))
             .Select(e => new AlertaPendente(e.Id, e.Tipo, e.OcorridoEm)).ToArray();
 
     private async Task<List<(int Id, string Tipo, DateTime OcorridoEm)>> ConsumirAsync(bool alerta,
@@ -56,7 +56,7 @@ public class VestivelRepository(GarupaDbContext context) : IVestivelRepository
     {
         // UPDATE RETURNING entrega cada registro a um único consumidor, inclusive em chamadas simultâneas.
         var tabela = alerta ? "alertas_vestivel" : "eventos_vestivel";
-        var filtro = alerta ? "\"DispositivoId\" = @dispositivo AND \"OcorridoEm\" > @limite" : "\"UsuarioId\" = @usuario";
+        var filtro = alerta ? "\"UsuarioId\" = @usuario AND \"DispositivoId\" = @dispositivo AND \"OcorridoEm\" > @limite" : "\"UsuarioId\" = @usuario";
         var bloqueio = context.Database.IsNpgsql() ? " FOR UPDATE SKIP LOCKED" : "";
         await context.Database.OpenConnectionAsync(ct);
         await using var command = context.Database.GetDbConnection().CreateCommand();
@@ -65,12 +65,12 @@ public class VestivelRepository(GarupaDbContext context) : IVestivelRepository
             $"(SELECT \"Id\" FROM {tabela} WHERE {filtro} AND \"ConsumidoEm\" IS NULL ORDER BY \"Id\" LIMIT 100{bloqueio}) " +
             "RETURNING \"Id\", \"Tipo\", \"OcorridoEm\"";
         Parametro(command, "agora", agora);
+        Parametro(command, "usuario", usuarioId);
         if (alerta)
         {
             Parametro(command, "dispositivo", dispositivoId!);
             Parametro(command, "limite", agora.AddSeconds(-30));
         }
-        else Parametro(command, "usuario", usuarioId);
         var resultado = new List<(int, string, DateTime)>();
         await using var reader = await command.ExecuteReaderAsync(ct);
         while (await reader.ReadAsync(ct))

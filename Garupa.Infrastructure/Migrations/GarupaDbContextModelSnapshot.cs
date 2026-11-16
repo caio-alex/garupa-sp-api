@@ -995,6 +995,9 @@ namespace Garupa.Infrastructure.Migrations
                         .HasMaxLength(120)
                         .HasColumnType("character varying(120)");
 
+                    b.Property<string>("SenhaHash")
+                        .HasColumnType("text");
+
                     b.Property<string>("Telefone")
                         .IsRequired()
                         .HasMaxLength(20)
@@ -1005,6 +1008,10 @@ namespace Garupa.Infrastructure.Migrations
                         .HasColumnType("uuid");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("Telefone")
+                        .IsUnique()
+                        .HasFilter("\"SenhaHash\" IS NOT NULL");
 
                     b.ToTable("usuarios", (string)null);
                 });

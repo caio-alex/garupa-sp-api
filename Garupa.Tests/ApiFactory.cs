@@ -58,6 +58,7 @@ public class ApiFactory : WebApplicationFactory<Program>
             new Dictionary<string, string?>
             {
                 ["ConnectionStrings:GarupaDb"] = "Host=unused;Database=tests",
+                ["Jwt:Chave"] = Convert.ToBase64String(Enumerable.Range(1, 32).Select(i => (byte)i).ToArray()),
                 ["Logging:EventLog:LogLevel:Default"] = "None"
             }));
         builder.ConfigureServices(services =>

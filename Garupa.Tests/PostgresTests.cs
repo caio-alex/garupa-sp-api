@@ -8,6 +8,7 @@ using Garupa.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
+using System.Net.Http.Headers;
 
 namespace Garupa.Tests;
 
@@ -29,11 +30,12 @@ public class PostgresTests
         using var client = factory.CriarCliente();
         var cadastro = await client.PostAsJsonAsync("/api/v1/usuarios", new
         {
-            nome = "Pessoa fictícia", telefone = "11987654321",
+            nome = "Pessoa fictícia", telefone = "11987654321", senha = "senha-teste-123",
             contato = new { nome = "Contato fictício", telefone = "1134567890" }
         });
         Assert.Equal(HttpStatusCode.Created, cadastro.StatusCode);
         var usuario = await cadastro.Content.ReadFromJsonAsync<JsonElement>();
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", usuario.GetProperty("token").GetString());
         var evento = new
         {
             usuarioId = usuario.GetProperty("usuarioId").GetInt32(),

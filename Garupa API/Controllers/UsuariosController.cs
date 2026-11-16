@@ -2,6 +2,10 @@
 using Garupa.Api.DTOs.Usuarios;
 using Garupa.Application.Interfaces;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Identity;
+using Garupa.Domain.Entities;
+using Microsoft.AspNetCore.Authorization;
+using Garupa.Api.Security;
 
 namespace Garupa.Api.Controllers;
 
@@ -10,10 +14,12 @@ namespace Garupa.Api.Controllers;
 public class UsuariosController : ControllerBase
 {
     private readonly IUsuarioService _usuarioService;
+    private readonly EmissorJwt _emissor;
 
-    public UsuariosController(IUsuarioService usuarioService)
+    public UsuariosController(IUsuarioService usuarioService, EmissorJwt emissor)
     {
         _usuarioService = usuarioService;
+        _emissor = emissor;
     }
 
     [HttpPut("{id:int}")]
@@ -32,6 +38,7 @@ public class UsuariosController : ControllerBase
             ? NoContent() : Problem(statusCode: 404, title: "Contato não encontrado.");
 
     [HttpPost]
+    [AllowAnonymous]
     public async Task<IActionResult> Criar(
         [FromBody] CriarUsuarioRequest request,
         CancellationToken cancellationToken)
@@ -47,18 +54,24 @@ public class UsuariosController : ControllerBase
             });
         }
 
+        _emissor.ObterChave();
         var usuario = await _usuarioService.CriarAsync(
             request.Nome,
             request.Telefone,
             request.Contato.Nome,
             request.Contato.Telefone,
-            cancellationToken);
+            cancellationToken,
+            new PasswordHasher<Usuario>().HashPassword(null!, request.Senha));
+
+        var autenticacao = _emissor.Emitir(usuario.Id);
 
         return Created(
             $"/api/v1/usuarios/{usuario.Id}",
             new
             {
-                usuarioId = usuario.Id
+                usuarioId = usuario.Id,
+                token = autenticacao.Token,
+                expiraEm = autenticacao.ExpiraEm
             });
     }
 
