@@ -3,6 +3,7 @@ using Garupa.Application.Interfaces;
 using Garupa.Domain.Enums;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
+using Garupa.Api.Documentacao;
 
 namespace Garupa.Api.Controllers;
 
@@ -41,10 +42,25 @@ public class SosController(ISosService service) : ControllerBase
 
     [HttpGet("acompanhar/{token}")]
     [AllowAnonymous]
-    public async Task<IActionResult> Acompanhar(string token, CancellationToken cancellationToken)
+    public async Task<IActionResult> Acompanhar(string token, CancellationToken cancellationToken, [FromQuery] bool pagina = false)
     {
+        Response.Headers.CacheControl = "no-store";
+        Response.Headers.Vary = "Accept";
+        Response.Headers["Referrer-Policy"] = "no-referrer";
+        var aceitos = Request.GetTypedHeaders().Accept;
+        var preferenciaHtml = aceitos?.Where(aceito => string.Equals(aceito.MediaType.Value, "text/html", StringComparison.OrdinalIgnoreCase))
+            .Select(aceito => aceito.Quality.GetValueOrDefault(1)).DefaultIfEmpty(0).Max() ?? 0;
+        var preferenciaJson = aceitos?.Where(aceito => string.Equals(aceito.MediaType.Value, "application/json", StringComparison.OrdinalIgnoreCase))
+            .Select(aceito => aceito.Quality.GetValueOrDefault(1)).DefaultIfEmpty(0).Max() ?? 0;
+        var exibirPagina = pagina || (preferenciaHtml > 0 && preferenciaHtml > preferenciaJson);
         var sos = await service.AcompanharAsync(token, cancellationToken);
-        if (sos is null) return Problem(statusCode: 404, title: "Acompanhamento não encontrado.");
+        if (sos is null)
+        {
+            if (!exibirPagina) return Problem(statusCode: 404, title: "Acompanhamento não encontrado.");
+            Response.StatusCode = StatusCodes.Status404NotFound;
+            return Content(PaginaAcompanhamento.Renderizar(null), "text/html; charset=utf-8");
+        }
+        if (exibirPagina) return Content(PaginaAcompanhamento.Renderizar(sos), "text/html; charset=utf-8");
         return Ok(new
         {
             posicao = new { lat = sos.Latitude, lon = sos.Longitude },

@@ -22,7 +22,7 @@ public class EmissorJwt(IConfiguration configuracao)
     public TokenEmitido Emitir(int usuarioId)
     {
         var chave = ObterChave();
-        var expiraEm = DateTime.UtcNow.AddHours(1);
+        var expiraEm = DateTime.UtcNow.AddDays(7);
         var token = new JwtSecurityToken("garupa-api", "garupa-app",
             [new Claim(JwtRegisteredClaimNames.Sub, usuarioId.ToString())], expires: expiraEm,
             signingCredentials: new SigningCredentials(new SymmetricSecurityKey(chave), SecurityAlgorithms.HmacSha256));

@@ -63,6 +63,26 @@ public class AutorizacaoJwtTests
         Assert.Equal(HttpStatusCode.Forbidden, evento.StatusCode);
         client.DefaultRequestHeaders.Authorization = null;
         Assert.Equal(HttpStatusCode.OK, (await client.GetAsync($"/api/v1/acompanhar/{acompanhamento}")).StatusCode);
+        using var navegador = new HttpRequestMessage(HttpMethod.Get, $"/api/v1/acompanhar/{acompanhamento}");
+        navegador.Headers.Accept.ParseAdd("text/html");
+        using var pagina = await client.SendAsync(navegador);
+        Assert.Equal(HttpStatusCode.OK, pagina.StatusCode);
+        Assert.Equal("text/html", pagina.Content.Headers.ContentType!.MediaType);
+        var html = await pagina.Content.ReadAsStringAsync();
+        Assert.Contains("Pedido de socorro ativo", html);
+        Assert.Contains("https://www.google.com/maps/search/?api=1&amp;query=-23.55%2C-46.63", html);
+        Assert.True(pagina.Headers.CacheControl!.NoStore);
+        using var paginaExplicita = await client.GetAsync($"/api/v1/acompanhar/{acompanhamento}?pagina=true");
+        Assert.Equal("text/html", paginaExplicita.Content.Headers.ContentType!.MediaType);
+        using var jsonPreferido = new HttpRequestMessage(HttpMethod.Get, $"/api/v1/acompanhar/{acompanhamento}");
+        jsonPreferido.Headers.Accept.ParseAdd("text/html;q=0.5, application/json");
+        using var respostaJson = await client.SendAsync(jsonPreferido);
+        Assert.Equal("application/json", respostaJson.Content.Headers.ContentType!.MediaType);
+        using var ausente = new HttpRequestMessage(HttpMethod.Get, "/api/v1/acompanhar/inexistente");
+        ausente.Headers.Accept.ParseAdd("text/html");
+        using var naoEncontrado = await client.SendAsync(ausente);
+        Assert.Equal(HttpStatusCode.NotFound, naoEncontrado.StatusCode);
+        Assert.Equal("text/html", naoEncontrado.Content.Headers.ContentType!.MediaType);
     }
 
     private static async Task<(int Id, string Token)> CadastrarAsync(HttpClient client, string telefone)
