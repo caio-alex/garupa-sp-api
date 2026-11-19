@@ -20,6 +20,7 @@ public record AcompanhamentoConsulta(PosicaoConsulta Posicao, DateTime Horario, 
 public record RelatoCriado(int RelatoId);
 public record DistritoConsulta(int DistritoId, string Nome);
 public record SaudeConsulta(string Versao, string Banco);
+public record EventoSegurancaConsulta(DateTimeOffset Data, string Correlacao, string[] Campos, string Risco, string Acao, string Mensagem, string Origem);
 public record LoginResposta(string Token, DateTime ExpiraEm);
 
 /// <summary>Documenta as respostas HTTP reais e exemplos fictícios de cada operação.</summary>
@@ -56,6 +57,7 @@ public class ContratoSwagger : IOperationFilter
         ["GET api/v1/eventos-vestivel/pendentes"] = new("Consumir até 100 eventos uma única vez", 200, typeof(EventoPendente[]), [400, 404]),
         ["GET api/v1/vestivel/{dispositivoId}/alertas/pendentes"] = new("Consumir alertas válidos uma única vez", 200, typeof(AlertaPendente[]), [404]),
         ["POST api/v1/relatos"] = new("Registrar relato idempotente dentro de São Paulo", 201, typeof(RelatoCriado), [400, 404, 409]),
+        ["GET api/v1/seguranca/meu-evento"] = new("Consultar o último evento de segurança do titular", 200, typeof(EventoSegurancaConsulta), [429]),
         ["GET api/v1/saude"] = new("Verificar versão e conexão com o banco", 200, typeof(SaudeConsulta), [503]),
         ["GET saude"] = new("Verificar saúde pelo endereço do monitor", 200, typeof(SaudeConsulta), [503])
     };
@@ -74,6 +76,9 @@ public class ContratoSwagger : IOperationFilter
         foreach (var status in contrato.Erros.Append(500))
             operation.Responses[status.ToString()] = Resposta(context, status,
                 status is 401 or 429 ? null : typeof(ProblemDetails));
+
+        if (caminho == "api/v1/seguranca/meu-evento")
+            operation.Responses["204"] = Resposta(context, 204, null);
 
         if (context.ApiDescription.ActionDescriptor.EndpointMetadata.OfType<IAllowAnonymous>().Any())
             operation.Security = [];
