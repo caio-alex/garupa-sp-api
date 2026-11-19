@@ -4,6 +4,8 @@ Global Solution 2026.2 · CitizenTech · Mobile Development e IoT.
 
 API em .NET 10 LTS com camadas Domain, Application, Infrastructure e API. PostgreSQL é o banco da aplicação. Os testes usam SQLite em memória e PostgreSQL com WebApplicationFactory.
 
+Esta documentação descreve a branch `main` do repositório, no commit `fc4e55e`. A branch `feat/cybersecurity` contém recursos adicionais descritos ao final deste arquivo.
+
 ## Membros
 - Caio Alexandre dos Santos - RM: 558460
 
@@ -12,6 +14,16 @@ API em .NET 10 LTS com camadas Domain, Application, Infrastructure e API. Postgr
 - Rafael de Mônaco Maniezo - RM: 556079
 
 - Vinicius Rozas Panucci de Paula Cont - RM: 555338
+
+- ## Ficha da CitizenTech
+| Pergunta | Resposta |
+| --- | --- |
+| **Cidadão** | Motociclistas da capital paulista, com foco no entregador por aplicativo: quem passa mais horas nas vias de maior risco, nem sempre escolhe a rota e trabalha sob pressão de prazo. |
+| **Problema** | Motociclistas são o maior grupo de mortes no trânsito da capital (475 de 1.034 em 2025, Infosiga) e batem recorde em 2026; 67,3% dos sinistros graves ou fatais de jan–ago de 2026 envolvem moto. O risco tem hora e lugar. |
+| **Como funciona** | Cadastro em camadas (nome, telefone e um contato; ficha médica, uso da moto e distritos opcionais). Antes do turno, o plano mostra os poucos pontos críticos das áreas da pessoa, no horário e com a chuva do momento (pela previsão do tempo ou escolhida à mão). Com o turno ativo, o app fica em segundo plano: avisa ao chegar perto de um ponto crítico (bipe, vibração e banner curto), detecta a queda (impacto + queda de velocidade + imobilidade), abre uma contagem de 30 s e, sem resposta, registra o SOS com a posição. O contato recebe um link de acompanhamento; quem socorre vê a ficha médica pela tela de bloqueio e liga ao 192. |
+| **Tecnologias** | App: Expo (React Native, TypeScript), SQLite, Google Maps, localização e sensores em segundo plano, notificações. Modelo de risco: Python com XGBoost (Infosiga, INMET), [garupa-sp-ml](https://github.com/Viniciuscont2/garupa-sp-ml). API: C#/.NET com PostgreSQL, [garupa-sp-api](https://github.com/caio-alex/garupa-sp-api). Pulseira opcional: ESP32 no Wokwi. |
+| **Ecossistema** | Motociclistas e entregadores; contatos de emergência; SAMU 192 (discagem confirmada pela pessoa); dados abertos (Infosiga, INMET, GeoSampa). Futuro: CET-SP, plataformas de entrega e seguradoras. |
+| **Medição de impacto** | Lift do modelo contra o mapa histórico; erros do detector em cenários de teste (matriz de confusão); tempo entre a queda e o link disponível ao contato; tempo do cadastro mínimo (meta: até 2 min). |
 
 ## Nossa Solução
 
@@ -25,7 +37,7 @@ Garupa SP é um app para o motociclista de São Paulo, em especial o entregador 
 
 4.Se houver queda: o app combina impacto forte, queda brusca de velocidade e imobilidade, e abre uma notificação de alta prioridade com alarme alto, contagem de 30 s visível e o botão "Estou bem"; tocar nela abre a tela de contagem.
 
-5.Sem resposta: o app grava o SOS na API, que gera um link de acompanhamento para os contatos; a testemunha vê a ficha médica, instruções curtas e a discagem do 192 pronta para confirmar.
+5.Sem resposta: o app registra o SOS na API, que gera um link de acompanhamento para os contatos. O acompanhamento da API retorna posição, horário e estado do SOS.
 
 6.Depois: o motociclista registra o local do acidente ou um perigo (buraco, óleo na pista) em dois toques; o relato vira uma camada observada, que o Infosiga não tem.
 
@@ -34,7 +46,20 @@ Garupa SP é um app para o motociclista de São Paulo, em especial o entregador 
 
 Instale o SDK .NET 10.0.404 ou uma atualização do mesmo feature band e o PostgreSQL 17. O `global.json` fixa o SDK e inclui `.local/dotnet` na busca, com fallback para a instalação do sistema. Isso permite ao Visual Studio 2026 localizar o SDK local mesmo quando o instalador do IDE trouxe outra versão. O manifesto `dotnet-tools.json` fixa o `dotnet-ef` 10.0.15. O script `Use-DotNet.ps1` seleciona também o host e o runtime locais para os comandos do terminal.
 
-No Windows, abra o PowerShell na raiz do repositório e execute a sequência abaixo no mesmo terminal. Substitua os valores de usuário e senha pelos escolhidos para a instância local do projeto. O script do banco usa os binários do PostgreSQL 17 instalados em `C:\Program Files\PostgreSQL\17\bin`.
+O cadastro e o login exigem uma chave JWT persistente em Base64, com pelo menos 32 bytes. Na primeira configuração local, abra o PowerShell na raiz do projeto e gere uma chave nos User Secrets. Execute esta etapa antes de iniciar a API e preserve a chave entre reinicializações.
+
+```powershell
+.\scripts\Use-DotNet.ps1
+$bytesChaveJwt = New-Object byte[] 32
+$geradorJwt = [System.Security.Cryptography.RandomNumberGenerator]::Create()
+try { $geradorJwt.GetBytes($bytesChaveJwt) } finally { $geradorJwt.Dispose() }
+$chaveJwt = [Convert]::ToBase64String($bytesChaveJwt)
+dotnet user-secrets set 'Jwt:Chave' $chaveJwt --project 'Garupa API/Garupa API.csproj'
+```
+
+No Railway, configure a mesma chave de assinatura para as instâncias do ambiente por meio da variável `Jwt__Chave`. Uma nova chave invalida os tokens emitidos com a anterior.
+
+No Windows, execute a sequência abaixo no mesmo terminal. Substitua os valores de usuário e senha pelos escolhidos para a instância local do projeto. O script do banco usa os binários do PostgreSQL 17 instalados em `C:\Program Files\PostgreSQL\17\bin`.
 
 ```powershell
 .\scripts\Use-DotNet.ps1
@@ -74,22 +99,42 @@ Para parar essa instância após o desenvolvimento, execute na raiz do projeto.
 
 O Swagger está disponível em `/swagger` em todos os ambientes, inclusive Production. O documento OpenAPI está em `/swagger/v1/swagger.json`. Ele documenta os códigos HTTP, os schemas de resposta, os parâmetros e exemplos fictícios dos corpos de requisição. A URL local aparece no terminal. O arquivo `Garupa API/Garupa API.http` contém exemplos do fluxo.
 
+### Publicação no Railway com Supabase
+
+O `Dockerfile` da raiz publica a API em .NET 10 e usa a porta `PORT` definida pelo Railway. O serviço precisa das variáveis `ConnectionStrings__GarupaDb`, `Jwt__Chave` e `Criptografia__Chave` ou `Criptografia__ArquivoChave`.
+
+Para o PostgreSQL do Supabase, obtenha os parâmetros em **Connect → Session pooler** e configure a conexão no serviço da API. Use a senha do banco e os dados exibidos no próprio projeto Supabase.
+
+```text
+Host=HOST_DO_POOLER;Port=5432;Database=postgres;Username=USUARIO_DO_POOLER;Password=SENHA_DO_BANCO;SSL Mode=Require
+```
+
+Configure o pre-deploy do Railway para preparar o banco antes de iniciar a nova versão:
+
+```bash
+dotnet "Garupa API.dll" preparar-banco
+```
+
+Após o deploy, confira `/saude` e acesse `/swagger` pelo domínio público do serviço. Chaves e senhas devem ser configuradas no ambiente do serviço. A chave de criptografia usada com dados existentes deve ser preservada.
+
 ## Cadastro e SOS
 
-As rotas da API usam `/api/v1`. O cadastro exige um objeto `contato` com nome e telefone. Usuário e contato inicial são gravados na mesma transação do EF Core. Telefones brasileiros aceitam DDD, código +55 e formatação, e são armazenados apenas com dígitos nacionais.
+As rotas da API usam `/api/v1`. O cadastro exige nome, telefone, senha de 8 a 128 caracteres e um objeto `contato` com nome e telefone. Usuário e contato inicial são gravados na mesma transação do EF Core. Telefones brasileiros aceitam DDD, código +55 e formatação, e são armazenados apenas com dígitos nacionais. A senha é armazenada como hash.
 
 ```json
 {
   "nome": "Pessoa fictícia",
   "telefone": "11987654321",
+  "senha": "senha-teste-123",
   "contato": { "nome": "Contato fictício", "telefone": "1134567890" }
 }
 ```
 
 | Método | Rota | Resposta |
 | --- | --- | --- |
-| POST | `/api/v1/usuarios` | 201 com `usuarioId` |
-| GET | `/api/v1/usuarios/{id}` | 200 ou 404 |
+| POST | `/api/v1/usuarios` | 201 com `usuarioId`, `token` e `expiraEm` |
+| POST | `/api/v1/autenticacao/login` | 200 com `token` e `expiraEm` |
+| GET | `/api/v1/usuarios/{id}` | 200, 401, 403 ou 404 |
 | POST | `/api/v1/usuarios/{id}/contatos` | 201 ou 404 |
 | POST | `/api/v1/sos` | 201 com `sosId` e `tokenAcompanhamento` |
 | GET | `/api/v1/acompanhar/{token}` | 200 ou 404 |
@@ -98,6 +143,10 @@ As rotas da API usam `/api/v1`. O cadastro exige um objeto `contato` com nome e 
 | GET | `/api/v1/saude` | 200 com banco conectado ou 503 |
 
 `/saude` também atende o monitor existente. As antigas rotas sem prefixo de SOS e vestível foram movidas para `/api/v1`.
+
+O login recebe `telefone` e `senha`. Cadastro e login emitem JWT válido por sete dias. Para chamar as rotas protegidas, envie `Authorization: Bearer <token>` ou use **Authorize** no Swagger. A API confere a validade do token e verifica se o usuário tem acesso aos dados solicitados. Contas antigas sem senha não conseguem fazer login. Cadastro, login, saúde e acompanhamento por token são acessíveis sem JWT.
+
+O acompanhamento é acessado em `/api/v1/acompanhar/{token}`. O navegador pode receber uma página HTML com estado, horário e um link para a localização no Google Maps. Use `?pagina=true` para solicitar explicitamente a página. Clientes que solicitam JSON recebem posição, horário e estado. `tokenAcompanhamento` identifica o link do SOS e tem validade própria.
 
 O SOS exige GUID não vazio em `eventoId`, usuário existente, `tipo` (`queda`, `mal_estar`, `agressao_assalto`), `origem` (`celular`, `vestivel`), horário ISO 8601 UTC e coordenadas válidas. Horários futuros são recusados. Um reenvio com o mesmo evento e os mesmos dados devolve o mesmo ID e token. Reutilizar o evento com outros dados retorna 409. O índice único e o tratamento de conflito no PostgreSQL também protegem envios concorrentes. A busca do token usa SHA-256. A cópia necessária para devolver o token em um reenvio fica criptografada com AES-GCM.
 
@@ -178,8 +227,6 @@ O catálogo inclui mensagens gerais para chuva, noite, domingo e ponto crítico,
 
 O vestível recebe `turno_ativo`, `ponto_critico`, `mensagem`, `contagem_queda`, `sos_enviado`, `cancelado` e `turno_encerrado`. A expiração usa o horário do evento em UTC. Cada consulta consome até 100 registros, em ordem de ID. Desparear ou trocar o dispositivo elimina as pendências anteriores. Dispositivo sem pareamento recebe 404.
 
-<img width="626" height="890" alt="image" src="https://github.com/user-attachments/assets/a75fc4e8-f9bb-423d-8a30-e8b1004fb47e" />
-
 
 ## Carga do risco
 
@@ -200,3 +247,4 @@ As consultas retornam listas vazias enquanto o CSV do modelo não for importado.
 O teste `RiscoEPlanoAtendemMetasComCargaSinteticaEmKestrel` usa Kestrel HTTP em uma porta local dinâmica e PostgreSQL em schema exclusivo. A carga tem 10.000 células fictícias. Para cada rota, ele faz cinco aquecimentos e cem requisições, com quatro chamadas simultâneas, e mede p50, p95, máximo, bytes e quantidade de pontos.
 
 As metas verificadas são p95 até 500 ms e resposta até 200.000 bytes. O relatório é gravado em `.local/evidencias/desempenho-postgres.json`. A execução é local e usa dados sintéticos, portanto a validação com o CSV real deve ser feita quando ele estiver disponível. Consulte também `docs/VALIDACAO_API.md` para as evidências desta versão.
+
