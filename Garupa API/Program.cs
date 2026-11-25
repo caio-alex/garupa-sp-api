@@ -18,6 +18,8 @@ builder.Logging.AddJsonConsole();
 // Controllers e documentação
 builder.Services.AddScoped<VerificacaoProprietarioFilter>();
 builder.Services.AddSingleton<EmissorJwt>();
+builder.Services.AddSingleton<AuditoriaCadastro>();
+builder.Services.AddHttpClient<Garupa.Api.Services.ExplicadorGemini>(c => c.Timeout = TimeSpan.FromSeconds(5));
 builder.Services.AddControllers(options => options.Filters.AddService<VerificacaoProprietarioFilter>());
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -52,6 +54,12 @@ builder.Services.AddAuthorization(options => options.FallbackPolicy =
 builder.Services.AddRateLimiter(options =>
 {
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.AddFixedWindowLimiter("painel-seguranca", limiter =>
+    {
+        limiter.PermitLimit = 20;
+        limiter.Window = TimeSpan.FromMinutes(1);
+        limiter.QueueLimit = 0;
+    });
     options.AddFixedWindowLimiter("login", limiter =>
     {
         limiter.PermitLimit = 10;
@@ -196,6 +204,9 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+if (app.Environment.IsDevelopment())
+    app.MapGet("/painel-seguranca", () => Results.Content(
+        Garupa.Api.Documentacao.PainelSeguranca.Html, "text/html; charset=utf-8")).AllowAnonymous().ExcludeFromDescription();
 
 app.Run();
 

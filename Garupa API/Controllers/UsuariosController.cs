@@ -15,6 +15,7 @@ public class UsuariosController : ControllerBase
 {
     private readonly IUsuarioService _usuarioService;
     private readonly EmissorJwt _emissor;
+    private AuditoriaCadastro Auditoria => HttpContext.RequestServices.GetRequiredService<AuditoriaCadastro>();
 
     public UsuariosController(IUsuarioService usuarioService, EmissorJwt emissor)
     {
@@ -24,13 +25,23 @@ public class UsuariosController : ControllerBase
 
     [HttpPut("{id:int}")]
     public async Task<IActionResult> Atualizar(int id, CriarContatoRequest request, CancellationToken ct)
-        => await _usuarioService.AtualizarAsync(id, request.Nome, request.Telefone, ct)
-            ? NoContent() : Problem(statusCode: 404, title: "Usuário não encontrado.");
+    {
+        var dados = Auditoria.Marcar(request);
+        if (!await _usuarioService.AtualizarAsync(id, request.Nome, request.Telefone, ct))
+            return Problem(statusCode: 404, title: "Usuário não encontrado.");
+        Auditoria.Registrar(id, dados, HttpContext.TraceIdentifier, OrigemPii.AtualizacaoCadastro);
+        return NoContent();
+    }
 
     [HttpPut("{id:int}/contatos/{contatoId:int}")]
     public async Task<IActionResult> AtualizarContato(int id, int contatoId, CriarContatoRequest request, CancellationToken ct)
-        => await _usuarioService.AtualizarContatoAsync(id, contatoId, request.Nome, request.Telefone, ct)
-            ? NoContent() : Problem(statusCode: 404, title: "Contato não encontrado.");
+    {
+        var dados = Auditoria.Marcar(request);
+        if (!await _usuarioService.AtualizarContatoAsync(id, contatoId, request.Nome, request.Telefone, ct))
+            return Problem(statusCode: 404, title: "Contato não encontrado.");
+        Auditoria.Registrar(id, dados, HttpContext.TraceIdentifier, OrigemPii.Contato);
+        return NoContent();
+    }
 
     [HttpDelete("{id:int}/contatos/{contatoId:int}")]
     public async Task<IActionResult> RemoverContato(int id, int contatoId, CancellationToken ct)
@@ -54,6 +65,7 @@ public class UsuariosController : ControllerBase
             });
         }
 
+        var dados = Auditoria.Marcar(request);
         _emissor.ObterChave();
         var usuario = await _usuarioService.CriarAsync(
             request.Nome,
@@ -64,6 +76,7 @@ public class UsuariosController : ControllerBase
             new PasswordHasher<Usuario>().HashPassword(null!, request.Senha));
 
         var autenticacao = _emissor.Emitir(usuario.Id);
+        Auditoria.Registrar(usuario.Id, dados, HttpContext.TraceIdentifier, OrigemPii.Cadastro);
 
         return Created(
             $"/api/v1/usuarios/{usuario.Id}",
@@ -119,6 +132,7 @@ public class UsuariosController : ControllerBase
             });
         }
 
+        var dados = Auditoria.Marcar(request);
         var contato = await _usuarioService.AdicionarContatoAsync(
             id,
             request.Nome,
@@ -128,6 +142,7 @@ public class UsuariosController : ControllerBase
         if (contato is null)
             return NotFound();
 
+        Auditoria.Registrar(id, dados, HttpContext.TraceIdentifier, OrigemPii.Contato);
         return StatusCode(201, new
         {
             contatoId = contato.Id

@@ -2,6 +2,7 @@ using System.ComponentModel.DataAnnotations;
 using Garupa.Application.Interfaces;
 using Garupa.Domain.Entities;
 using Microsoft.AspNetCore.Mvc;
+using Garupa.Api.Security;
 
 namespace Garupa.Api.Controllers;
 
@@ -18,9 +19,15 @@ public class PrivacidadeController(IPrivacidadeService privacidade, IPerfilServi
 
     [HttpPut("ficha-medica")]
     public async Task<IActionResult> FichaMedica(int id, FichaMedicaRequest request, CancellationToken ct)
-        => await privacidade.AtualizarFichaAsync(id, request.TipoSanguineo, request.Alergias,
-            request.Condicoes, request.Medicamentos, ct)
-            ? NoContent() : Problem(statusCode: 404, title: "Usuário não encontrado.");
+    {
+        var auditoria = HttpContext.RequestServices.GetRequiredService<AuditoriaCadastro>();
+        var dados = auditoria.Marcar(request);
+        if (!await privacidade.AtualizarFichaAsync(id, request.TipoSanguineo, request.Alergias,
+                request.Condicoes, request.Medicamentos, ct))
+            return Problem(statusCode: 404, title: "Usuário não encontrado.");
+        auditoria.Registrar(id, dados, HttpContext.TraceIdentifier, OrigemPii.FichaMedica);
+        return NoContent();
+    }
 
     [HttpPut("perfil")]
     public async Task<IActionResult> Perfil(int id, PerfilRequest request, CancellationToken ct)
