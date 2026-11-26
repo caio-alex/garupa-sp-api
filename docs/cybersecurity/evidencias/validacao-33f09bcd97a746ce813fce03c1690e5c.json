@@ -1,0 +1,125 @@
+﻿{
+    "utc":  "2026-11-19T00:04:08.1363914Z",
+    "sucesso":  false,
+    "etapas":  [
+                   {
+                       "teste":  "painel em Development",
+                       "passou":  true,
+                       "observado":  200
+                   },
+                   {
+                       "teste":  "consulta sem JWT",
+                       "passou":  true,
+                       "observado":  401
+                   },
+                   {
+                       "teste":  "cadastro sintetico A",
+                       "passou":  true,
+                       "observado":  201
+                   },
+                   {
+                       "teste":  "JWT e correlacao recebidos (A)",
+                       "passou":  true,
+                       "observado":  "presenca"
+                   },
+                   {
+                       "teste":  "cadastro sintetico B",
+                       "passou":  true,
+                       "observado":  201
+                   },
+                   {
+                       "teste":  "JWT e correlacao recebidos (B)",
+                       "passou":  true,
+                       "observado":  "presenca"
+                   },
+                   {
+                       "teste":  "eventos de cadastro distintos",
+                       "passou":  true,
+                       "observado":  "comparacao das correlacoes"
+                   },
+                   {
+                       "teste":  "evento do titular 1",
+                       "passou":  true,
+                       "observado":  200
+                   },
+                   {
+                       "teste":  "evento do titular 1 corresponde ao proprio cadastro",
+                       "passou":  true,
+                       "observado":  "correlacao"
+                   },
+                   {
+                       "teste":  "evento do titular 1 identifica cinco campos",
+                       "passou":  true,
+                       "observado":  5
+                   },
+                   {
+                       "teste":  "evento do titular 1 omite valores pessoais e JWT",
+                       "passou":  true,
+                       "observado":  "resposta verificada"
+                   },
+                   {
+                       "teste":  "evento do titular 1 apresenta risco e mensagem",
+                       "passou":  true,
+                       "observado":  "risco amarelo"
+                   },
+                   {
+                       "teste":  "evento do titular 1 identifica origem",
+                       "passou":  true,
+                       "observado":  "origem conhecida"
+                   },
+                   {
+                       "teste":  "evento do titular 1 usa Gemini",
+                       "passou":  true,
+                       "observado":  "Gemini"
+                   },
+                   {
+                       "teste":  "evento do titular 2",
+                       "passou":  true,
+                       "observado":  200
+                   },
+                   {
+                       "teste":  "evento do titular 2 corresponde ao proprio cadastro",
+                       "passou":  true,
+                       "observado":  "correlacao"
+                   },
+                   {
+                       "teste":  "evento do titular 2 identifica cinco campos",
+                       "passou":  true,
+                       "observado":  5
+                   },
+                   {
+                       "teste":  "evento do titular 2 omite valores pessoais e JWT",
+                       "passou":  true,
+                       "observado":  "resposta verificada"
+                   },
+                   {
+                       "teste":  "evento do titular 2 apresenta risco e mensagem",
+                       "passou":  true,
+                       "observado":  "risco amarelo"
+                   },
+                   {
+                       "teste":  "evento do titular 2 identifica origem",
+                       "passou":  true,
+                       "observado":  "origem conhecida"
+                   },
+                   {
+                       "teste":  "evento do titular 2 usa Gemini",
+                       "passou":  false,
+                       "observado":  "Mensagem local"
+                   }
+               ],
+    "evento":  {
+                   "correlacao":  "0HNQ5PP10UQOK:00000003",
+                   "campos":  [
+                                  "Nome",
+                                  "Telefone",
+                                  "Contato.Nome",
+                                  "Contato.Telefone",
+                                  "Senha"
+                              ],
+                   "risco":  "Amarelo",
+                   "origem":  "Gemini",
+                   "mensagem":  "A API impediu a gravação dos seus dados pessoais (Nome, Telefone, Contato.Nome, Contato.Telefone e Senha) nos logs do sistema. Além disso, não há nenhuma evidência de que tenha ocorrido uma invasão."
+               },
+    "erro":  null
+}
